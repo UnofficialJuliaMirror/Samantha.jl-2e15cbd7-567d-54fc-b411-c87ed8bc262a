@@ -12,7 +12,7 @@ Spiking neural network engine written in Julia, which is primarily aimed at crea
 ## Installation
 Install a supported version of Julia (currently 0.6 or greater) on a supported OS.  
 ```
-Pkg.checkout("https://gitlab.com/Samantha.ai/Samantha.jl")
+Pkg.clone("https://gitlab.com/Samantha.ai/Samantha.jl")
 ```
 
 ## Dependencies

@@ -151,8 +151,5 @@ end=#
 
 ### Includes ###
 
-if USE_OPENCL
-  include("opencl.jl")
-end
 include("generic/core.jl")
 include("conv/core.jl")

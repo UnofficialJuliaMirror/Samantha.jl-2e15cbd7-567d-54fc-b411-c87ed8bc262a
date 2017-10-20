@@ -91,9 +91,3 @@ function _eforward!(scont::CPUContainer{S}, input, output) where S<:GenericSynap
   # TODO: Dispatch on type (or just pull into learn!)
   clamp!(W, 0f0, gs.learn.Wmax)
 end
-
-### Includes ###
-
-if USE_OPENCL
-  include("opencl.jl")
-end

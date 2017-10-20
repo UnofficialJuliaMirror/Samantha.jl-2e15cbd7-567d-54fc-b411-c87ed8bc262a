@@ -16,8 +16,5 @@ end
 
 include("learn.jl")
 include("modify.jl")
-if USE_OPENCL
-  include("opencl.jl")
-end
 include("generic/core.jl")
 include("conv/core.jl")
