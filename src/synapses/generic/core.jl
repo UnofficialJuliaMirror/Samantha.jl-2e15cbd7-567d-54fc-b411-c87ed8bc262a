@@ -70,20 +70,19 @@ function _eforward!(scont::CPUContainer{S}, input, output) where S<:GenericSynap
   # Shift inputs through frontend
   I_ = frontend!(gs.frontend, I)
 
-  # TODO: Enable threading
   # Article: Unsupervised learning of digit recognition using spike-timing-dependent plasticity
   # Authors: Peter U. Diehl and Matthew Cook
   @inbounds for i = indices(W, 2)
     @inbounds @simd for n = indices(W, 1)
       # Convolve weights with input
-      C[n,i] += M[n,i] * ((W[n,i] * I[i]) + (condRate * -C[n,i] * !I[i]))
-      O[n] += W[n,i] * M[n,i] * C[n,i] * I[i]
+      C[n,i] += M[n,i] * ((W[n,i] * I_[i]) + (condRate * -C[n,i] * !I_[i]))
+      O[n] += W[n,i] * M[n,i] * C[n,i] * I_[i]
 
       # Update traces
-      T[n,i] += I[i] + (traceRate * -T[n,i] * !I[i])
+      T[n,i] += I_[i] + (traceRate * -T[n,i] * !I_[i])
 
       # Learn weights
-      W[n,i] += learn!(gs.learn, I_[i], G[n,i], F[n,i], W[n,i])
+      W[n,i] += learn!(gs.learn, I_[i], G[n], F[n], W[n,i])
     end
   end
 
