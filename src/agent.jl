@@ -15,7 +15,7 @@ AgentRunTable() = AgentRunTable(Dict{Int,Vector{String}}([(idx, String[]) for id
 load(ldbl::Loadable, name::String, ::Type{AgentRunTable}) = AgentRunTable()
 store!(ldbl::Loadable, name::String, data::AgentRunTable) = ()
 
-@compgen mutable struct Agent
+@nodegen mutable struct Agent
   nodes::Dict{String, AbstractContainer}
   edges::Vector{Tuple{String, String, Symbol}}
   layout::Dict{String, Union{Dict, String}}
@@ -34,10 +34,11 @@ setindex!(agent1::Agent, agent2::Agent, idx::String) = merge!(agent1, agent2; na
 # Adds a node, with the option of a top-level name
 function addnode!(agent::Agent, node::AbstractNode; name::String="")
   id = randstring(16)
-  agent.nodes[id] = CPUContainer(node)
   if name != ""
+    @assert !haskey(agent.layout, name) "Name $name already exists in layout"
     agent.layout[name] = id
   end
+  agent.nodes[id] = CPUContainer(node)
   return id
 end
 
@@ -57,10 +58,11 @@ function addedge!(agent::Agent, src::String, pairs::Tuple)
 end
 
 # Deletes an edge
-function deledge!(agent::Agent, op::Symbol; src::String="", dst::String="")
-  @assert (src != "") || (dst != "") "Must specify src and/or dst"
-  # FIXME
-  agent.edges = filter(edge->((src!="" && edge[1]!=src)&&()&&(edge[3]!=op)), agent.edges)
+function deledge!(agent::Agent, src::String, dst::String, op::Symbol)
+  edges = find(edge->(edge[1]==src&&edge[2]==dst&&edge[3]==op), agent.edges)
+  @assert length(edges) != 0 "No such edge found with src: $src, dst: $dst, op: $op"
+  @assert length(edges) < 2 "Multiple matching edges returned"
+  deleteat!(agent.edges, edges[1])
 end
 
 # Returns the union of two agents

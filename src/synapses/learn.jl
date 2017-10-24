@@ -1,6 +1,6 @@
 ### Types ###
 
-@compgen mutable struct SymmetricRuleLearn
+@nodegen mutable struct SymmetricRuleLearn
   α_pre::Float32
   α_post::Float32
   xtar::Float32 
@@ -8,14 +8,14 @@
   μ::Int
 end
 SymmetricRuleLearn() = SymmetricRuleLearn(0.1, 0.5, 0.5, 5, 1)
-@compgen mutable struct PowerLawLearn
+@nodegen mutable struct PowerLawLearn
   α::Float32
   xtar::Float32
   Wmax::Float32
   μ::Float32
 end
 PowerLawLearn() = PowerLawLearn(0.1, 0.5, 5, 1)
-@compgen mutable struct ExpWeightDepLearn
+@nodegen mutable struct ExpWeightDepLearn
   α::Float32
   xtar::Float32
   Wmax::Float32

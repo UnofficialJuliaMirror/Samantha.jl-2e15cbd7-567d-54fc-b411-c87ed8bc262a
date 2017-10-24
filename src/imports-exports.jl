@@ -5,7 +5,7 @@ import Base: size, getindex, setindex!, get, merge, merge!
 ### Exports ###
 
 export AbstractBranch, AbstractAccelerator, AbstractContainer, AbstractLoadable, AbstractNode
-export @compgen, iscompgenerated
+export @nodegen, isnodegenerated
 export loadfile, storefile!, load, store!, sync!
 export size, show, relocate!, register!, nupdate!, eforward!
 export mutate!

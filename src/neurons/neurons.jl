@@ -10,7 +10,7 @@ export size, accum!, nforward!, gradients, inputs, outputs, setindex!, getindex,
 
 ### Types ###
 
-@compgen mutable struct NConfig{S}
+@nodegen mutable struct NConfig{S}
   size::S
   a::Float32
   b::Float32
@@ -20,7 +20,7 @@ export size, accum!, nforward!, gradients, inputs, outputs, setindex!, getindex,
   traceRate::Float32
   boostRate::Float32
 end
-@compgen mutable struct NState{RT<:AbstractArray{Float32}, BT<:AbstractArray{Bool}}
+@nodegen mutable struct NState{RT<:AbstractArray{Float32}, BT<:AbstractArray{Bool}}
   V::RT
   U::RT
   I::RT
@@ -28,7 +28,7 @@ end
   T::RT
   B::RT
 end
-@compgen mutable struct Neurons{C<:NConfig, S<:NState} <: AbstractNode
+@nodegen mutable struct Neurons{C<:NConfig, S<:NState} <: AbstractNeurons
   conf::C
   state::S
 end

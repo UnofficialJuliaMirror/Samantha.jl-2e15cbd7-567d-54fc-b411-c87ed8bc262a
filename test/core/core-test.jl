@@ -2,6 +2,7 @@
   agent = Agent()
   n1 = GenericNeurons(8)
   addnode!(agent, n1; name="N1")
+  @test length(agent.nodes) == 1
   n2 = GenericNeurons(8)
   addnode!(agent, n2; name="N2")
   s1 = GenericSynapses(8, 8)
@@ -10,9 +11,23 @@
     (agent["N1"], :input),
     (agent["N2"], :output)
   ))
+  @test length(agent.edges) == 2
   run!(agent)
 
-  @test_broken "delnode!, deledge!"
+  nt = GenericNeurons(8)
+  addnode!(agent, nt; name="NT")
+  st = GenericSynapses(8, 8)
+  addnode!(agent, st; name="ST")
+  addedge!(agent, agent["ST"], (
+    (agent["N1"], :input),
+    (agent["NT"], :output)
+  ))
+  deledge!(agent, agent["ST"], agent["N1"], :input)
+  @test length(agent.edges) == 3
+  deledge!(agent, agent["ST"], agent["NT"], :output)
+  delnode!(agent, agent["ST"])
+  @test length(agent.nodes) == 4
+  delnode!(agent, agent["NT"])
 
   # Hooks
   addhook!(agent, "Input", agent["N1"], (:state, :I))

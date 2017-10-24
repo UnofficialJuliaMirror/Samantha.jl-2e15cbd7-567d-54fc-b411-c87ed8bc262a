@@ -5,7 +5,7 @@ export SymmetricRuleLearn, PowerLawLearn, ExpWeightDepLearn, ConvSynapses
 ### Types ###
 
 # TODO: Use Value type to select additional modes?
-@compgen mutable struct ConvSynapses{L} <: AbstractSynapses
+@nodegen mutable struct ConvSynapses{L} <: AbstractSynapses
   inputSize::Tuple{Int,Int,Int}
   filterSize::Int
   numFilters::Int
@@ -57,12 +57,10 @@ function learn!(f, cs, stride, W, I, G, F, O)
       @inbounds for fj = indices(W, 3)
         @inbounds for fi = indices(W, 2)
           @inbounds @simd for fc = indices(W, 1)
-            I_ = Float32(I[fc, oi+fi-1, oj+fj-1]) #Float32(I[fc, (stride*(oi-1))+fi, (stride*(oj-1))+fj])
+            I_ = Float32(I[fc, oi+fi-1, oj+fj-1]) # TODO: Enable stride: Float32(I[fc, (stride*(oi-1))+fi, (stride*(oj-1))+fj])
 
             # Learn
-            # TODO: Convert I to bool? Or maybe 0-1 (which it will be if coming from CairoNode)
-            #W[fc,fi,fj,f] += learn!(cs.learn, I_, G[oi,oj,f], F[oi,oj,f], W[fc,fi,fj,f])
-            W[fc,fi,fj,f] += (α_post * F[oi,oj,f] * (I_ - xtar) * (Wmax - W[fc,fi,fj,f]#=^μ=#)) - (α_pre * I_ * G[oi,oj,f] * W[fc,fi,fj,f]#=^μ=#)
+            W[fc,fi,fj,f] += learn!(cs.learn, I_, G[oi,oj,f], F[oi,oj,f], W[fc,fi,fj,f])
           end
         end
       end

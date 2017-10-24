@@ -4,14 +4,14 @@ export GenericConfig, GenericState, GenericSynapses
 
 ### Types ###
 
-@compgen mutable struct GenericFrontend{I}
+@nodegen mutable struct GenericFrontend{I}
   delayLength::Int
 
   D::Vector{Array{Bool,I}}
   #ID::Matrix{I} # TODO: Wrong type?
 end
 GenericFrontend(inputSize, delayLength) = GenericFrontend(delayLength, [zeros(Bool, inputSize) for i = 1:delayLength])
-@compgen mutable struct GenericSynapses{F, L, S} <: AbstractSynapses
+@nodegen mutable struct GenericSynapses{F, L, S} <: AbstractSynapses
   inputSize::Int
   outputSize::Int
   outputMask::Float32

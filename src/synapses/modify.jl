@@ -4,7 +4,7 @@ export GenericMod
 
 ### Types ###
 
-@compgen mutable struct GenericMod
+@nodegen mutable struct GenericMod
   learnMod::Float32
   learnModShort::Float32
   learnModLong::Float32
