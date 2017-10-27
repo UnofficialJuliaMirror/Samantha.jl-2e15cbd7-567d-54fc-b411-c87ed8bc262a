@@ -10,18 +10,23 @@ macro nodegen(ex::Expr)
   final = Expr(:block)
 
   # Capture type information
-  # TODO: Use single capture pass
-  # TODO: Capture all subtypes
-  # TODO: Store ex in a method for later retrieval
-  if @capture(ex, mutable struct (T_{TP__}|T_) <: TA_ fields__ end)
+  if @capture(ex, struct (T_{TP__}|T_) fields__ end)
+    nothing
+  elseif @capture(ex, struct (T_{TP__}|T_) <: TA_ fields__ end)
+    nothing
+  elseif @capture(ex, mutable struct (T_{TP__}|T_) <: TA_ fields__ end)
     nothing
   elseif @capture(ex, mutable struct (T_{TP__}|T_) fields__ end)
     nothing
   end
+
+  #@assert isdefined(:T) && T != nothing "Failed to parse type definition"
   TP == nothing && (TP = [])
   TPN = []
   TPT = []
   for param in TP
+    # TODO: Capture optional values for bounds() and defaultvalue()
+    # TODO: Capture all type parameters
     if @capture(param, A_ <: B_)
       push!(TPN, A)
       push!(TPT, B)
@@ -31,6 +36,7 @@ macro nodegen(ex::Expr)
     end
   end
   TA == nothing && (TA = Any)
+  # TODO: Store type data in a method for later retrieval
 
   # Re-generate type
   push!(final.args, ex)
@@ -39,9 +45,8 @@ macro nodegen(ex::Expr)
     isnodegenerated
     getindex/setindex!
     params
-    TODO: bounds
+    TODO: bounds/defaultvalue
     load/store!/sync!
-    mutate!
     TODO: show/showall
   =#
   push!(final.args, esc(:(isnodegenerated(__data::$T) = true)))
@@ -49,15 +54,13 @@ macro nodegen(ex::Expr)
   load = Expr(:call, T)
   store = quote settype!(ldbl, $(length(TPN) > 0 ? Expr(:curly, T, TPN...) : T)) end
   sync = quote end
-  mutate = quote end
   for (name,typ) in map(f->(f.args...), fields)
     push!(final.args, esc(quote
-      #Base.getindex(__data::$T, ind::Val{$(QuoteNode(name))}) = __data.$name
-      Base.getindex(__data::CPUContainer{T}, ind::Val{$(QuoteNode(name))}) where T<:$T = __data.$name
+      Base.getindex(__data::$T, ind::Val{$(QuoteNode(name))}) = __data.$name
     end))
-    push!(final.args, :(
+    push!(final.args, esc(quote
       Base.setindex!(__data::$T, val, ind::Val{$(QuoteNode(name))}) = (__data.$name = val)
-    ))
+    end))
     push!(params.args, :(
       __dict[$(QuoteNode(name))] = __data.$name
     ))
@@ -70,10 +73,13 @@ macro nodegen(ex::Expr)
     push!(sync.args, :(
       sync!(__data.$name)
     ))
-    push!(mutate.args, :(
-      mutate!(__data.$name)
-    ))
   end
+  push!(final.args, esc(quote
+    Base.getindex(__data::$T, ind::NTuple{N,Val}) where N = __data[ind[1]][ind[2:end]]
+    Base.getindex(__data::$T, ind::Tuple{Val}) = __data[ind[1]]
+    Base.setindex!(__data::$T, val, ind::NTuple{N,Val}) where N = (__data[ind[1]][ind[2:end]] = val)
+    Base.setindex!(__data::$T, val, ind::Tuple{Val}) = (__data[ind[1]] = val)
+  end))
   push!(final.args, esc(:(function params(__data::T) where T<:$T
     __dict = Dict{Symbol,Any}()
     $params
@@ -94,17 +100,7 @@ macro nodegen(ex::Expr)
   push!(final.args, esc(:(function sync!(__data::$T)
     $sync
   end)))
-  push!(final.args, esc(:(function mutate!(__data::$T)
-    $mutate
-  end)))
 
-  #=println(T)
-  println(TP)
-  println(TPN)
-  println(TPT)
-  println(TA)=#
-  #println(final)
-  #dump(final; maxdepth=100)
   return final
 end
 

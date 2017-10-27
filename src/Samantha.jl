@@ -14,6 +14,7 @@ include("h5.jl")
 include("neurons/neurons.jl")
 include("synapses/synapses.jl")
 include("agent.jl")
+include("mutate.jl")
 include("optimize.jl")
 
 # Standard Library

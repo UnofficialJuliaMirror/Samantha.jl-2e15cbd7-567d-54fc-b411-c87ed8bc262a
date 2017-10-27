@@ -1,6 +1,6 @@
 @testset "Core Tests" begin
   include("core-test.jl")
-  @test_broken "Mutate Test"
+  include("mutate-test.jl")
   @test_broken "Evolve Test"
 
   @test_broken "GenericNeurons"

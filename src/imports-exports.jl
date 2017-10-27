@@ -13,3 +13,5 @@ export inputs, outputs, getindex, setindex!
 export params
 export addnode!, delnode!, addedge!, deledge!, addhook!, delhook!, gethook, sethook!
 export merge, merge!
+
+export MutationProfile, InplaceMutation
