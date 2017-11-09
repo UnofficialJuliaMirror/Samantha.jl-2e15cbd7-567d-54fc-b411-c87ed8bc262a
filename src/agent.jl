@@ -46,7 +46,7 @@ end
 # TODO: Delete associated edges
 function delnode!(agent::Agent, id::String)
   node = agent.nodes[id]
-  delete!(agent.nodes, id)
+  Base.delete!(agent.nodes, id)
 end
 
 # Adds an edge connection from a source node to a target node with a specified operation
@@ -95,7 +95,7 @@ end
 # Deletes a hook from an agent
 function delhook!(agent::Agent, name::String)
   @assert haskey(agent.hooks, name) "Hook $name does not exist"
-  delete!(agent.hooks, name)
+  Base.delete!(agent.hooks, name)
 end
 
 # Gets the value of an agent hook
