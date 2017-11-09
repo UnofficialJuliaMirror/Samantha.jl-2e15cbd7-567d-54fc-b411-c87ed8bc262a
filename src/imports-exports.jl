@@ -14,4 +14,4 @@ export addnode!, delnode!, addedge!, deledge!, addhook!, delhook!, gethook, seth
 export merge, merge!
 
 export MutationProfile, InplaceMutation, mutate!
-export EvalFactor, EvolutionProfile, EvolutionState, GenericMode, seed!
+export EvalFactor, EvolutionProfile, EvolutionState, GenericMode, addfactor!, seed!

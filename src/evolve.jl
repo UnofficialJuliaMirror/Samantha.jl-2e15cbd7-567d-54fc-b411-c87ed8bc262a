@@ -9,9 +9,9 @@ end
 
 mutable struct EvolutionProfile
   mprofile::MutationProfile
-  factors::Vector{EvalFactor}
+  factors::Dict{String,EvalFactor}
 end
-EvolutionProfile(mprofile) = EvolutionProfile(mprofile, EvalFactor[])
+EvolutionProfile(mprofile) = EvolutionProfile(mprofile, Dict{String,EvalFactor}())
 
 abstract type AbstractEvolutionMode end
 mutable struct GenericMode <: AbstractEvolutionMode
@@ -38,6 +38,20 @@ EvolutionState(profile::EvolutionProfile, mode::AbstractEvolutionMode) =
 
 ### Utility Methods ###
 
+function setindex!(estate::EvolutionState, agent::Agent, name::String)
+  estate.agents[name] = agent
+  estate.scores[name] = Dict{String,Float64}()
+  estate.mode[name] = agent
+end
+function delete!(estate::EvolutionState, name::String)
+  delete!(estate.agents, name)
+  delete!(estate.scores, name)
+  delete!(estate.mode, name)
+end
+function addfactor!(profile::EvolutionProfile, key::String, pointValue, preFunc::Function, postFunc::Function)
+  profile.factors[key] = EvalFactor(preFunc, postFunc, pointValue, Dict{String,Any}())
+end
+addfactor!(profile, pointValue, preFunc, postFunc) = addfactor!(profile, randstring(), pointValue, preFunc, postFunc)
 function seed!(estate::EvolutionState, agent::Agent, name=randstring())
   estate.seeds[name] = agent
 end
@@ -47,7 +61,7 @@ end
 # Pre-Evaluation phase
 function preeval_phase!(estate::EvolutionState)
   for (name,agent) in estate.agents
-    for factor in estate.profile.factors
+    for (key,factor) in estate.profile.factors
       factor.preFunc(agent, factor.state)
     end
   end
@@ -61,7 +75,7 @@ end
 # Post-Evaluation phase
 function posteval_phase!(estate::EvolutionState)
   for (name,agent) in estate.agents
-    for factor in estate.profile.factors
+    for (key,factor) in estate.profile.factors
       estate.scores[name][key] = factor.postFunc(agent, factor.state)
     end
   end
@@ -70,12 +84,15 @@ end
 function run!(estate::EvolutionState)
   preeval_phase!(estate)
   run_phase!(estate)
-  preeval_phase!(estate)
+  posteval_phase!(estate)
   lifecycle_phase!(estate)
 end
 
 ### GenericMode Defaults ###
 
+setindex!(mode::GenericMode, agent::Agent, name::String) =
+  setindex!(mode.energies, mode.initialEnergy, name)
+delete!(mode::GenericMode, name::String) = delete!(mode.energies, name)
 function lifecycle_phase!(estate::EvolutionState{GenericMode})
   # Calculate current birth and death energies
   carryFactor = length(collect(keys(estate.agents))) / estate.mode.capacity
@@ -94,18 +111,16 @@ function lifecycle_phase!(estate::EvolutionState{GenericMode})
   for name in created
     child = mutate!(deepcopy(estate.agents[name]), estate.profile.mprofile)
     child_name = randstring()
-    estate.agents[child_name] = child
-    estate.mode.energies[child_name] = estate.mode.initialEnergy
+    estate[child_name] = child
   end
   for name in destroyed
-    delete!(estate.agents, name)
-    delete!(estate.mode.energies, name)
+    delete!(estate, name)
   end
 
   # Clone from seeds if necessary
   if length(estate.agents) == 0
     name = randstring()
-    estate.agents[name] = mutate!(deepcopy(rand(collect(values(estate.seeds)))), estate.profile.mprofile)
-    estate.mode.energies[name] = estate.mode.initialEnergy
+    agent = mutate!(deepcopy(rand(collect(values(estate.seeds)))), estate.profile.mprofile)
+    estate[name] = agent
   end
 end

@@ -32,7 +32,10 @@
   @test length(evstate.agents) >= 1
   @test all(name->haskey(emode.energies, name), keys(evstate.agents))
 
-  # TODO: Test basic EvalFactor functionality
+  addfactor!(eprofile, "test1", 1, (agent, state) -> state["pre"] = true, (agent, state) -> (state["post"] = state["pre"]; 1))
+  run!(evstate)
+  @test haskey(evstate.profile.factors["test1"].state, "post")
+  @test all(score->score["test1"]==1, values(evstate.scores))
 
   # TODO: Test birth/death bounding creates/destroys agents
 end
