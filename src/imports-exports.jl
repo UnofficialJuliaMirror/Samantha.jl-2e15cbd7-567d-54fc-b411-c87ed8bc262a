@@ -8,10 +8,10 @@ export AbstractBranch, AbstractAccelerator, AbstractContainer, AbstractLoadable,
 export @nodegen, isnodegenerated
 export loadfile, storefile!, load, store!, sync!
 export size, show, relocate!, register!, nupdate!, eforward!
-export mutate!
 export inputs, outputs, getindex, setindex!
 export params
 export addnode!, delnode!, addedge!, deledge!, addhook!, delhook!, gethook, sethook!
 export merge, merge!
 
-export MutationProfile, InplaceMutation
+export MutationProfile, InplaceMutation, mutate!
+export EvalFactor, EvolutionProfile, EvolutionState, GenericMode, seed!

@@ -42,6 +42,8 @@ function mutate!(agent::Agent, profile::MutationProfile)
     mutation = mutations[rand(eachindex(mutations))]
     mutate!(agent, mutation)
   end
+
+  return agent
 end
 
 ### Match Checking ###

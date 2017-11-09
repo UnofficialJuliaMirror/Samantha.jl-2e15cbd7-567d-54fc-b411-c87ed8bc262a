@@ -1,4 +1,4 @@
-@testset "Mutate Test" begin
+@testset "Mutation Test" begin
   agent = Agent()
 
   n1 = GenericNeurons(10)
