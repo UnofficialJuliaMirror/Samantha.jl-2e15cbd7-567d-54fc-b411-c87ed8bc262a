@@ -28,9 +28,16 @@ end
 
 ### Methods ###
 
+function Base.show(io::IO, synapses::ConvSynapses)
+  outputSize = (synapses.inputSize[2]-synapses.filterSize+1, synapses.inputSize[3]-synapses.filterSize+1, synapses.numFilters)
+  println(io, "ConvSynapses ($(synapses.inputSize) => $(outputSize))")
+  println(io, "  Filter Size: $(synapses.filterSize) x $(synapses.filterSize)")
+  println(io, "  Stride: $(synapses.stride)")
+  println(io, "  Learning Algorithm: $(synapses.learn)")
+end
 function Base.size(cs::ConvSynapses)
   # FIXME: Stride
-  outputSize = (inputSize[2]-filterSize+1, inputSize[3]-filterSize+1, numFilters)
+  outputSize = (cs.inputSize[2]-cs.filterSize+1, cs.inputSize[3]-cs.filterSize+1, cs.numFilters)
 end
 
 function update!(f, cs, stride, W, I, G, F, O)

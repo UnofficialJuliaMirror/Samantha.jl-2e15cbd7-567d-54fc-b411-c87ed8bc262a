@@ -151,6 +151,28 @@ function mutate!(agent::Agent, p::Real)
   end
 end
 
+# Prints a short representation of the agent
+# TODO: Use colors if enabled
+function Base.show(io::IO, agent::Agent)
+  println(io, "Agent:")
+  println(io, "  $(length(agent.nodes)) nodes")
+  println(io, "  $(length(agent.edges)) edges")
+  println(io, "  $(length(agent.hooks)) hooks")
+  println(io, "  $(length(agent.groups)) groups")
+end
+
+# Prints a long representation of the agent
+# TODO: Use colors if enabled
+# TODO: Optionally elaborate nodes, edges, hooks, groups?
+function Base.showall(io::IO, agent::Agent)
+  Base.show(io, agent)
+  println(io, "  Layout:")
+  for (name,value) in agent.layout
+    # TODO: Recursively descend into value if possible
+    println(io, "    $name: $value")
+  end
+end
+
 # Runs all nodes for one iteration
 function run_nodes!(agent::Agent)
   nodes = collect(values(agent.nodes))

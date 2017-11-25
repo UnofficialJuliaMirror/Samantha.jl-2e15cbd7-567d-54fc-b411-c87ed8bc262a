@@ -25,3 +25,9 @@ ConvNeurons(size::Tuple{Int,Int,Int}; a=0.02, b=0.2, c=-65, d=8, thresh=30, trac
       zeros(Bool, size...),
       zeros(Float32, size...),
       zeros(Float32, size...)))
+
+### Methods ###
+
+function Base.show(io::IO, neurons::ConvNeurons)
+  println(io, "ConvNeurons $(neurons.conf.size)")
+end

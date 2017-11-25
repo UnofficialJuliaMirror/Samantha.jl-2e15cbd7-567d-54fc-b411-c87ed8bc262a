@@ -37,15 +37,15 @@ ExpWeightDepLearn() = ExpWeightDepLearn(0.1, 0.5, 5, 1, 1)
 ### Methods ###
 
 @inline function learn!(lrn::SymmetricRuleLearn, I, G, F, W)
-  const α_pre, α_post, xtar, Wmax, μ = lrn.α_pre, lrn.α_post, lrn.xtar, lrn.Wmax, lrn.μ
+  α_pre, α_post, xtar, Wmax, μ = lrn.α_pre, lrn.α_post, lrn.xtar, lrn.Wmax, lrn.μ
   return (α_post * F * (I - xtar) * (Wmax - W^μ)) - (α_pre * I * G * W^μ)
 end
 # TODO: Inspect both of these:
 @inline function learn!(lrn::PowerLawLearn, I, G, F, W)
-  const α, xtar, Wmax, μ = lrn.α, lrn.xtar, lrn.Wmax, lrn.μ
+  α, xtar, Wmax, μ = lrn.α, lrn.xtar, lrn.Wmax, lrn.μ
   return α * F * (G - xtar) * (Wmax - W)^μ
 end
 @inline function learn!(lrn::ExpWeightDepLearn, I, G, F, W)
-  const α, xtar, Wmax, μ, β = lrn.α, lrn.xtar, lrn.Wmax, lrn.μ, lrn.β
+  α, xtar, Wmax, μ, β = lrn.α, lrn.xtar, lrn.Wmax, lrn.μ, lrn.β
   return α * F * ((G * exp(-β * W)) - (xtar * exp(-β * (Wmax - W))))
 end

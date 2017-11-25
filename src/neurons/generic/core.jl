@@ -25,3 +25,8 @@ GenericNeurons(size::Int; a=0.02, b=0.2, c=-65, d=8, thresh=30, traceRate=0.5, b
       zeros(Bool, size),
       zeros(Float32, size),
       zeros(Float32, size)))
+
+### Methods ###
+function Base.show(io::IO, neurons::GenericNeurons)
+  println(io, "GenericNeurons ($(neurons.conf.size))")
+end

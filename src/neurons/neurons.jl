@@ -37,6 +37,10 @@ NCPUCont{C,S} = CPUContainer{Neurons{C,S}}
 
 ### Methods ###
 
+function Base.show(io::IO, neurons::Neurons)
+  println(io, "Neurons ($(neurons.conf.size))")
+end
+
 size(neurons::Neurons) = neurons.conf.size
 
 # TODO: Fill in the rest of the inactive methods

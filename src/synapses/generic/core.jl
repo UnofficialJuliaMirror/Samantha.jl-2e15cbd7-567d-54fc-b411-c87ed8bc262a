@@ -45,6 +45,9 @@ GenericSynapses(inputSize::Int, outputSize::Int; outputMask=1, condRate=0.1, tra
 
 ### Methods ###
 
+function Base.show(io::IO, synapses::GenericSynapses)
+  println(io, "GenericSynapses ($(synapses.inputSize) => $(synapses.outputSize))")
+end
 function frontend!(gf::GenericFrontend, I)
   I_ = gf.D[end]
   @inbounds for d = length(gf.D):-1:1
