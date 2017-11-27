@@ -7,7 +7,7 @@ export GenericNConfig, GenericNState, GenericNeurons
 GenericNConfig = NConfig{Int}
 const GenericNState = NState{Vector{Float32}, Vector{Bool}}
 const GenericNeurons = Neurons{GenericNConfig, GenericNState}
-GenericNeurons(size::Int; a=0.02, b=0.2, c=-65, d=8, thresh=30, traceRate=0.5, boostRate=0.0) =
+GenericNeurons(size::Int; a=0.02, b=0.2, c=-65, d=8, thresh=30, θRate=0.5, traceRate=0.5, boostRate=0.0) =
   GenericNeurons(
     GenericNConfig(
       size,
@@ -16,6 +16,7 @@ GenericNeurons(size::Int; a=0.02, b=0.2, c=-65, d=8, thresh=30, traceRate=0.5, b
       c,
       d,
       thresh,
+      θRate,
       traceRate,
       boostRate),
     GenericNState(
@@ -24,9 +25,11 @@ GenericNeurons(size::Int; a=0.02, b=0.2, c=-65, d=8, thresh=30, traceRate=0.5, b
       zeros(Float32, size),
       zeros(Bool, size),
       zeros(Float32, size),
+      zeros(Float32, size),
       zeros(Float32, size)))
 
 ### Methods ###
+
 function Base.show(io::IO, neurons::GenericNeurons)
   println(io, "GenericNeurons ($(neurons.conf.size))")
 end

@@ -7,6 +7,7 @@ export GenericConfig, GenericState, GenericSynapses
 @nodegen mutable struct GenericFrontend{I}
   delayLength::Int
 
+  # FIXME
   D::Vector{Array{Bool,I}}
   #ID::Matrix{I} # TODO: Wrong type?
 end

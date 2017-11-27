@@ -7,7 +7,7 @@ export ConvNConfig, ConvNState, ConvNeurons
 ConvNConfig = NConfig{Tuple{Int,Int,Int}}
 const ConvNState = NState{Array{Float32, 3}, Array{Bool, 3}}
 const ConvNeurons = Neurons{ConvNConfig, ConvNState}
-ConvNeurons(size::Tuple{Int,Int,Int}; a=0.02, b=0.2, c=-65, d=8, thresh=30, traceRate=0.75, boostRate=0.01) =
+ConvNeurons(size::Tuple{Int,Int,Int}; a=0.02, b=0.2, c=-65, d=8, thresh=30, θRate=0.5, traceRate=0.75, boostRate=0.01) =
   ConvNeurons(
     ConvNConfig(
       size,
@@ -16,6 +16,7 @@ ConvNeurons(size::Tuple{Int,Int,Int}; a=0.02, b=0.2, c=-65, d=8, thresh=30, trac
       c,
       d,
       thresh,
+      θRate,
       traceRate,
       boostRate),
     ConvNState(
@@ -23,6 +24,7 @@ ConvNeurons(size::Tuple{Int,Int,Int}; a=0.02, b=0.2, c=-65, d=8, thresh=30, trac
       zeros(Float32, size...),
       zeros(Float32, size...),
       zeros(Bool, size...),
+      zeros(Float32, size...),
       zeros(Float32, size...),
       zeros(Float32, size...)))
 
