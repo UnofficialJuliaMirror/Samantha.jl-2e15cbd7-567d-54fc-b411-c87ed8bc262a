@@ -1,4 +1,7 @@
 # Samantha.jl
+
+[![pipeline status](https://gitlab.com/Samantha.ai/Samantha.jl/badges/master/pipeline.svg)](https://gitlab.com/Samantha.ai/Samantha.jl/commits/master)
+
 Spiking neural network engine written in Julia, which is primarily aimed at creating and running human-like AI agents in real-time.
 
 ## Goals
