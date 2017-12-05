@@ -2,4 +2,7 @@ image: julia:0.6
 
 default:
   script: 
+    - apt update
+    - apt upgrade
+    - apt install libhdf5-8 make gcc
     - julia -e "Pkg.update();Pkg.clone(\"https://gitlab.com/Samantha.ai/Samantha.jl\");Pkg.checkout(\"Samantha\", \"\$(ENV[\"CI_COMMIT_REF_NAME\"])\");Pkg.test(\"Samantha\")"
