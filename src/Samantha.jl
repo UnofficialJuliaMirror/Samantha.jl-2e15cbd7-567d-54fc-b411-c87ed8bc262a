@@ -23,4 +23,7 @@ include("evolve.jl")
 # Standard Library
 include("Stdlib.jl")
 
+# External Optional Dependencies
+include("external/External.jl")
+
 end

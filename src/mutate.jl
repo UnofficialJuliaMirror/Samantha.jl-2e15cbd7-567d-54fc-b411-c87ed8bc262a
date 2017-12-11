@@ -34,6 +34,10 @@ end=#
 
 const MutationProfile = Vector{AbstractMutation}
 
+# TODO: ArrayMutator? (For controlling how arrays mutate, incremental vs. replace, sparse vs. dense, etc.)
+
+### Methods ###
+
 # TODO: More than one mutation per cycle? Or maybe try to apply ALL mutations at once???
 function mutate!(profile::MutationProfile, agent::Agent)
   # Determine which mutations are possible
