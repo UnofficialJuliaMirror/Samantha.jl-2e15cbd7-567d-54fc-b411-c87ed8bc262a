@@ -1,11 +1,7 @@
-### Imports ###
-
-import Base: get
-
 ### Exports ###
 
 export CPUContainer
-export get, getroot
+export root, transient
 
 ### Types ###
 
@@ -21,9 +17,10 @@ end
 ### Methods ###
 
 # Gets the root of a container
-getroot(cont::AbstractContainer) = cont.root
+root(cont::AbstractContainer) = cont.root
 
 # Gets the transient of a container
-get(cont::AbstractContainer) = cont.transient
-get(cont::InactiveContainer) = cont.root
-get(cont::CPUContainer) = cont.root
+# TODO: Replace with getfield?
+transient(cont::AbstractContainer) = cont.transient
+transient(cont::InactiveContainer) = root(cont)
+transient(cont::CPUContainer) = root(cont)

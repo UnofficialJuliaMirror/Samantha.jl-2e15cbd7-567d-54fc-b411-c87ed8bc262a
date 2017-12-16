@@ -1,10 +1,10 @@
 ### Methods ###
 
 function ThalamusModel(config::Dict)
-  numTR = Base.get(config, "numTR", 8)
-  numtRN = Base.get(config, "numtRN", 1)
-  szTR = Base.get(config, "szTR", 64)
-  sztRN = Base.get(config, "sztRN", 64)
+  numTR = get(config, "numTR", 8)
+  numtRN = get(config, "numtRN", 1)
+  szTR = get(config, "szTR", 64)
+  sztRN = get(config, "sztRN", 64)
 
   agent = Agent()
 

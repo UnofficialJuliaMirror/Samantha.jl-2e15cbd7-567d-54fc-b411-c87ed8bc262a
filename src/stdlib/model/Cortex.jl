@@ -1,11 +1,11 @@
 ### Methods ###
 
 function CortexModel(config::Dict)
-  numCol = Base.get(config, "numCol", 4)
-  szL23e = Base.get(config, "szL23e", 8)
-  szL4e = Base.get(config, "szL4e", 8)
-  szL5e = Base.get(config, "szL5e", 8)
-  szL6e = Base.get(config, "szL6e", 8)
+  numCol = get(config, "numCol", 4)
+  szL23e = get(config, "szL23e", 8)
+  szL4e = get(config, "szL4e", 8)
+  szL5e = get(config, "szL5e", 8)
+  szL6e = get(config, "szL6e", 8)
 
   agent = Agent()
 

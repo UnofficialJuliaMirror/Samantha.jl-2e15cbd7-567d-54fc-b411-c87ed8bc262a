@@ -29,13 +29,6 @@
   @test length(agent.nodes) == 4
   delnode!(agent, agent["NT"])
 
-  # Hooks
-  addhook!(agent, "Input", agent["N1"], (:state, :I))
-  addhook!(agent, "Output", agent["N2"], (:state, :F))
-  delhook!(agent, "Input")
-  O = gethook(agent, "Output")
-  sethook!(agent, "Output", O)
-
   # Store/Load
   path = joinpath(SAMANTHA_DATA_PATH, "core-test.h5")
   storefile!(path, agent)

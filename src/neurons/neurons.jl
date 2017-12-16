@@ -74,7 +74,7 @@ function nupdate!(neurons::Neurons)
     _nupdate!(i, conf.a, conf.b, conf.c, conf.d, conf.thresh, conf.θRate, conf.traceRate, conf.boostRate, state.V, state.U, state.I, state.F, state.T, state.B, state.θ)
   end
 end
-nupdate!{C,S}(ncont::NCPUCont{C,S}) = nupdate!(get(ncont))
+nupdate!{C,S}(ncont::NCPUCont{C,S}) = nupdate!(transient(ncont))
 
 ### Includes ###
 

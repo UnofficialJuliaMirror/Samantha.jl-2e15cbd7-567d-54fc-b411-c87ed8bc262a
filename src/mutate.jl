@@ -48,10 +48,10 @@ end
 
 ### Match Checking ###
 hasmatches(agent::Agent, mutation::InplaceMutation) =
-  any(node->typeof(Samantha.get(node))<:mutation.nodetype, values(agent.nodes))
+  any(node->typeof(transient(node))<:mutation.nodetype, values(agent.nodes))
 #=function hasmatches(agent::Agent, mutation::InsertNodeMutation)
   for typ in values(mutation.pattern)
-    if length(filter(id->(typeof(get(agent.nodes[id]))==typ), agent.nodes)) == 0
+    if length(filter(id->(typeof(transient(agent.nodes[id]))==typ), agent.nodes)) == 0
       return false
     end
   end
@@ -63,7 +63,7 @@ end=#
 
 function mutate!(agent::Agent, mutation::InplaceMutation)
   # Pick random matching node
-  nodes = filter(node->typeof(node[2])<:mutation.nodetype, [(id,get(node)) for (id,node) in agent.nodes])
+  nodes = filter(node->typeof(node[2])<:mutation.nodetype, [(id,transient(node)) for (id,node) in agent.nodes])
   id, node = nodes[rand(1:length(nodes))]
   for (path,(prob,gen)) in mutation.params
     # TODO: Pass down result of bounds(node, path)

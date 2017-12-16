@@ -1,5 +1,5 @@
 export Agent
-export load, store!, sync!, addnode!, delnode!, addedge!, deledge!, addhook!, delhook!, gethook, sethook!, merge, merge!, barrier
+export load, store!, sync!, addnode!, delnode!, addedge!, deledge!, merge, merge!, barrier
 export clone, mutate!
 export activate!, deactivate!
 export relocate!, store!, sync!, addnode!, delnode!, addedge!, deledge!, merge, merge!, barrier
@@ -19,11 +19,10 @@ store!(ldbl::Loadable, name::String, data::AgentRunTable) = ()
   nodes::Dict{String, AbstractContainer}
   edges::Vector{Tuple{String, String, Symbol}}
   layout::Dict{String, Union{Dict, String}}
-  hooks::Dict{String, Tuple{String, Tuple}}
   groups::Dict{String, Vector{String}}
   rt::AgentRunTable
 end
-Agent() = Agent(Dict{String,AbstractContainer}(), Tuple{String,String,Symbol}[], Dict{String,Union{Dict,String}}(), Dict{String,Tuple{String,Tuple}}(), Dict{String,Vector{String}}(), AgentRunTable())
+Agent() = Agent(Dict{String,AbstractContainer}(), Tuple{String,String,Symbol}[], Dict{String,Union{Dict,String}}(), Dict{String,Vector{String}}(), AgentRunTable())
 
 # Retrieve layout item
 getindex(agent::Agent, idx::String) = agent.layout[idx]
@@ -85,25 +84,6 @@ function merge!(agent1::Agent, agent2::Agent; name::String="")
   return agent1
 end
 
-# Adds a hook to an agent
-# TODO: Validate that path exists
-function addhook!(agent::Agent, name::String, obj::String, path::Tuple)
-  @assert !haskey(agent.hooks, name) "Hook $name already exists"
-  agent.hooks[name] = (name, map(param->(param isa Val ? param : Val{param}()), path))
-end
-
-# Deletes a hook from an agent
-function delhook!(agent::Agent, name::String)
-  @assert haskey(agent.hooks, name) "Hook $name does not exist"
-  Base.delete!(agent.hooks, name)
-end
-
-# Gets the value of an agent hook
-gethook(agent::Agent, name::String) = agent.hooks[name]
-
-# Sets the value of an agent hook
-sethook!(agent::Agent, name::String, value) = (agent.hooks[name] = value)
-
 # Sets a barrier on all agent nodes
 function barrier(agent::Agent)
   for node in values(agent.nodes)
@@ -127,7 +107,7 @@ function activate!(agent::Agent, group::String)
   for idx in agent.groups[group]
     cont = agent.nodes[idx]
     if cont isa InactiveContainer
-      agent.nodes[idx] = CPUContainer(get(cont))
+      agent.nodes[idx] = CPUContainer(transient(cont))
     end
   end
 end
@@ -139,7 +119,7 @@ function deactivate!(agent::Agent, group::String)
   for idx in agent.groups[group]
     cont = agent.nodes[idx]
     if !(cont isa InactiveContainer)
-      agent.nodes[idx] = InactiveContainer(get(cont))
+      agent.nodes[idx] = InactiveContainer(transient(cont))
     end
   end
 end

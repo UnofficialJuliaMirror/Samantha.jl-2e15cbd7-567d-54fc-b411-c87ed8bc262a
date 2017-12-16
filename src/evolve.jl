@@ -44,8 +44,8 @@ function setindex!(estate::EvolutionState, agent::Agent, name::String)
   estate.mode[name] = agent
 end
 function delete!(estate::EvolutionState, name::String)
-  delete!(estate.agents, name)
-  delete!(estate.scores, name)
+  Base.delete!(estate.agents, name)
+  Base.delete!(estate.scores, name)
   delete!(estate.mode, name)
 end
 function addfactor!(profile::EvolutionProfile, key::String, pointValue, preFunc::Function, postFunc::Function)
@@ -92,10 +92,10 @@ end
 
 setindex!(mode::GenericMode, agent::Agent, name::String) =
   setindex!(mode.energies, mode.initialEnergy, name)
-delete!(mode::GenericMode, name::String) = delete!(mode.energies, name)
+delete!(mode::GenericMode, name::String) = Base.delete!(mode.energies, name)
 function lifecycle_phase!(estate::EvolutionState{GenericMode})
   # Calculate current birth and death energies
-  carryFactor = length(collect(keys(estate.agents))) / estate.mode.capacity
+  carryFactor = length(estate.agents) / estate.mode.capacity
   birthLower, birthUpper = estate.mode.birthBounds
   birthEnergy = carryFactor*(birthUpper-birthLower)+birthLower
   deathLower, deathUpper = estate.mode.deathBounds

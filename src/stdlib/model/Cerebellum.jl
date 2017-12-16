@@ -1,11 +1,11 @@
 ### Methods ###
 
 function CerebellumModel(config::Dict)
-  numZones = Base.get(config, "numZones", 4)
-  szGr = Base.get(config, "szGr", 32)
-  szPk = Base.get(config, "szPk", 8)
-  szDc = Base.get(config, "szDc", 4)
-  szIo = Base.get(config, "szIo", 4)
+  numZones = get(config, "numZones", 4)
+  szGr = get(config, "szGr", 32)
+  szPk = get(config, "szPk", 8)
+  szDc = get(config, "szDc", 4)
+  szIo = get(config, "szIo", 4)
 
   agent = Agent()
 

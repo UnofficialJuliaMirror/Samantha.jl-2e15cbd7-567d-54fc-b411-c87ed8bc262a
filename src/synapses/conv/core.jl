@@ -76,13 +76,13 @@ function learn!(f, cs, stride, W, I, G, F, O)
 end
 # TODO: Specify input and output types
 function _eforward!(scont::CPUContainer{S}, input, output) where S<:ConvSynapses
-  cs = getroot(scont)
+  cs = root(scont)
   stride, W = cs.stride, cs.W
 
-  I = get(input).data     #@param input[O]
-  G = get(output).state.T #@param output[T]
-  F = get(output).state.F #@param output[F]
-  O = get(output).state.I #@param output[I]
+  I = transient(input).data     #@param input[O]
+  G = transient(output).state.T #@param output[T]
+  F = transient(output).state.F #@param output[F]
+  O = transient(output).state.I #@param output[I]
   
   # Clear outputs
   fill!(O, 0f0)

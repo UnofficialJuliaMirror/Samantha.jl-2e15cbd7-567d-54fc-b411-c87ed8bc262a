@@ -33,5 +33,5 @@
   @test length(agent.nodes) == 3
   run!(agent)=#
   
-  @test_broken "Other mutations"
+  @test_skip "Other mutations"
 end

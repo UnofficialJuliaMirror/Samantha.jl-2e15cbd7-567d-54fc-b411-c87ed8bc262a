@@ -1,6 +1,6 @@
 @testset "All Tests" begin
   include("core/RUNME.jl")
-  @test_broken "Stdlib Tests"
-  @test_broken "Behavior Tests"
-  @test_broken "Perf Tests"
+  @test_skip "Stdlib Tests"
+  @test_skip "Behavior Tests"
+  @test_skip "Perf Tests"
 end

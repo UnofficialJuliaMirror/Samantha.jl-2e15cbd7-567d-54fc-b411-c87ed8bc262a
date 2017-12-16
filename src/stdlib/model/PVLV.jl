@@ -1,12 +1,12 @@
 ### Methods ###
 
 function PVLVModel(config::Dict)
-  numLanes = Base.get(config, "numLanes", 4)
-  szUS = Base.get(config, "szUS", 8)
-  szCS = Base.get(config, "szCS", 8)
-  szDA = Base.get(config, "szDA", 8)
-  szPV = Base.get(config, "szPV", 8)
-  szLV = Base.get(config, "szLV", 8)
+  numLanes = get(config, "numLanes", 4)
+  szUS = get(config, "szUS", 8)
+  szCS = get(config, "szCS", 8)
+  szDA = get(config, "szDA", 8)
+  szPV = get(config, "szPV", 8)
+  szLV = get(config, "szLV", 8)
 
   agent = Agent()
 

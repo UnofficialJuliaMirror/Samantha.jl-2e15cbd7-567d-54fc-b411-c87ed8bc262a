@@ -108,7 +108,7 @@ end
 store!(ldbl::Loadable, name, data::T) where T<:Dict{K,V} where {K,V<:Any} =
   writedata!(ldbl.h5Data, name, string(data))
 store!(ldbl::Loadable, name, data::T) where T<:AbstractContainer =
-  store!(ldbl, name, getroot(data))
+  store!(ldbl, name, root(data))
 store!(ldbl::Loadable, name, data::N) where N<:Number =
   writedata!(ldbl.h5Data, name, data)
 store!(ldbl::Loadable, name, data::A) where A<:AbstractArray{T} where T<:Number =

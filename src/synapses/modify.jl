@@ -21,7 +21,7 @@ GenericMod() = GenericMod(1f0, 0f0, 0f0, 1f0, 0f0, 0f0)
 #= FIXME
 function eforward!{C,S,M}(scont::CPUContainer{LearnModSynapses{C,S,M}}, ncontSrc::AbstractContainer, ncontDst::AbstractContainer)
   if scont.active
-    mod = get(scont).synapses.mod
+    mod = transient(scont).synapses.mod
     input = mean(outputs(ncontSrc))
     mod.learnModShort = (input + (32 * mod.learnModShort)) / (32 + 1)
     mod.learnModLong = (input + (1024 * mod.learnModLong)) / (1024 + 1)
@@ -30,7 +30,7 @@ function eforward!{C,S,M}(scont::CPUContainer{LearnModSynapses{C,S,M}}, ncontSrc
 end
 function eforward!{C,S,M}(scont::CPUContainer{ActModSynapses{C,S,M}}, ncontSrc::AbstractContainer, ncontDst::AbstractContainer)
   if scont.active
-    mod = get(scont).synapses.mod
+    mod = transient(scont).synapses.mod
     input = mean(outputs(ncontSrc))
     mod.actModShort = (input + (32 * mod.actModShort)) / (32 + 1)
     mod.actModLong = (input + (1024 * mod.actModLong)) / (1024 + 1)
