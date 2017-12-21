@@ -1,3 +1,5 @@
+import Base: delete!
+
 ### Types ###
 
 struct EvalFactor
@@ -9,6 +11,7 @@ end
 
 mutable struct EvolutionProfile
   mprofile::MutationProfile
+  # TODO: rprofile::RecombinationProfile
   factors::Dict{String,EvalFactor}
 end
 EvolutionProfile(mprofile) = EvolutionProfile(mprofile, Dict{String,EvalFactor}())
@@ -43,9 +46,9 @@ function setindex!(estate::EvolutionState, agent::Agent, name::String)
   estate.scores[name] = Dict{String,Float64}()
   estate.mode[name] = agent
 end
-function delete!(estate::EvolutionState, name::String)
-  Base.delete!(estate.agents, name)
-  Base.delete!(estate.scores, name)
+function Base.delete!(estate::EvolutionState, name::String)
+  delete!(estate.agents, name)
+  delete!(estate.scores, name)
   delete!(estate.mode, name)
 end
 function addfactor!(profile::EvolutionProfile, key::String, pointValue, preFunc::Function, postFunc::Function)
@@ -92,8 +95,9 @@ end
 
 setindex!(mode::GenericMode, agent::Agent, name::String) =
   setindex!(mode.energies, mode.initialEnergy, name)
-delete!(mode::GenericMode, name::String) = Base.delete!(mode.energies, name)
+Base.delete!(mode::GenericMode, name::String) = Base.delete!(mode.energies, name)
 function lifecycle_phase!(estate::EvolutionState{GenericMode})
+  added, deleted = String[], String[]
   # Calculate current birth and death energies
   carryFactor = length(estate.agents) / estate.mode.capacity
   birthLower, birthUpper = estate.mode.birthBounds

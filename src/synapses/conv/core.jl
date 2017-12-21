@@ -58,7 +58,7 @@ function update!(f, cs, stride, W, I, G, F, O)
 end
 function learn!(f, cs, stride, W, I, G, F, O)
   lrn = cs.learn
-  const α_pre, α_post, xtar, Wmax, μ = lrn.α_pre, lrn.α_post, lrn.xtar, lrn.Wmax, lrn.μ
+  α_pre, α_post, xtar, Wmax, μ = lrn.α_pre, lrn.α_post, lrn.xtar, lrn.Wmax, lrn.μ
   @inbounds for oj = indices(O, 2)
     @inbounds for oi = indices(O, 1)
       @inbounds for fj = indices(W, 3)

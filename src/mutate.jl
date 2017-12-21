@@ -4,8 +4,11 @@ struct InplaceMutation{T} <: AbstractMutation
   nodetype::T
   params::Dict{NTuple{N,Val} where N, Tuple}
 end
-InplaceMutation(nodetype, params) =
-  InplaceMutation(nodetype, Dict{NTuple{N,Val} where N, Tuple}(map(kv->Pair(Tuple(map(key->Val{key}(),kv[1])),kv[2]), params)))
+function InplaceMutation(nodetype, params)
+  symparams = map(kv->Pair(Tuple(map(key->Val{key}(),kv[1])),kv[2]), params)
+  newparams = Dict{NTuple{N,Val} where N, Tuple}(symparams)
+  InplaceMutation(nodetype, newparams)
+end
 # TODO: Constructor for "nesting" other InplaceMutations
 
 #=mutable struct InsertNodeMutation <: AbstractMutation

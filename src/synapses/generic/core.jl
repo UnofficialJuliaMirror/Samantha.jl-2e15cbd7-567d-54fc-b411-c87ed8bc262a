@@ -60,8 +60,8 @@ end
 # TODO: Specify input and output types
 function _eforward!(scont::CPUContainer{S}, input, output) where S<:GenericSynapses
   gs = root(scont)
-  const condRate, traceRate = gs.condRate, gs.traceRate
-  const C, W, M, T = gs.C, gs.W, gs.M, gs.T
+  condRate, traceRate = gs.condRate, gs.traceRate
+  C, W, M, T = gs.C, gs.W, gs.M, gs.T
 
   I = transient(input).state.F  #@param input[F]
   G = transient(output).state.T #@param output[G]
