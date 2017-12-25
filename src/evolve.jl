@@ -3,9 +3,7 @@ import Base: delete!
 ### Types ###
 
 struct EvalFactor
-  preFunc::Function
-  postFunc::Function
-  pointValue::Float64
+  func::Function
   state::Dict{String,Any}
 end
 
@@ -51,43 +49,34 @@ function Base.delete!(estate::EvolutionState, name::String)
   delete!(estate.scores, name)
   delete!(estate.mode, name)
 end
-function addfactor!(profile::EvolutionProfile, key::String, pointValue, preFunc::Function, postFunc::Function)
-  profile.factors[key] = EvalFactor(preFunc, postFunc, pointValue, Dict{String,Any}())
+function addfactor!(func::Function, profile::EvolutionProfile, key::String)
+  profile.factors[key] = EvalFactor(func, Dict{String,Any}())
 end
-addfactor!(profile, pointValue, preFunc, postFunc) = addfactor!(profile, randstring(), pointValue, preFunc, postFunc)
+addfactor!(func, profile) = addfactor!(profile, randstring(), func)
 function seed!(estate::EvolutionState, agent::Agent, name=randstring())
   estate.seeds[name] = agent
 end
 
 ### Phase Methods ###
 
-# Pre-Evaluation phase
-function preeval_phase!(estate::EvolutionState)
-  for (name,agent) in estate.agents
-    for (key,factor) in estate.profile.factors
-      factor.preFunc(agent, factor.state)
-    end
-  end
-end
 # Run phase
 function run_phase!(estate::EvolutionState)
   for agent in values(estate.agents)
     run!(agent)
   end
 end
-# Post-Evaluation phase
-function posteval_phase!(estate::EvolutionState)
+# Evaluation phase
+function eval_phase!(estate::EvolutionState)
   for (name,agent) in estate.agents
     for (key,factor) in estate.profile.factors
-      estate.scores[name][key] = factor.postFunc(agent, factor.state)
+      estate.scores[name][key] = factor.func(agent, factor.state)
     end
   end
 end
 # Run all phases
 function run!(estate::EvolutionState)
-  preeval_phase!(estate)
   run_phase!(estate)
-  posteval_phase!(estate)
+  eval_phase!(estate)
   lifecycle_phase!(estate)
 end
 
@@ -105,6 +94,12 @@ function lifecycle_phase!(estate::EvolutionState{GenericMode})
   deathLower, deathUpper = estate.mode.deathBounds
   deathEnergy = carryFactor*(deathUpper-deathLower)+deathLower
 
+  # Update energies based on scores
+  for (name,scores) in estate.scores
+    estate.mode.energies[name] += sum(values(scores))
+  end
+
+  # Mark agents for creation or deletion
   created = String[]
   destroyed = String[]
   for (name,energy) in estate.mode.energies

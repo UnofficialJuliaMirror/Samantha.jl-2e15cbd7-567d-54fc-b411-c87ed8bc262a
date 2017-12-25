@@ -4,14 +4,14 @@ export GenericConfig, GenericState, GenericSynapses
 
 ### Types ###
 
-@nodegen mutable struct GenericFrontend{I}
+@nodegen mutable struct GenericFrontend
   delayLength::Int
 
-  # FIXME
-  D::Vector{Array{Bool,I}}
-  #ID::Matrix{I} # TODO: Wrong type?
+  D::RingBuffer{Bool}
+  #ID::Vector{Int} # TODO: Wrong type?
 end
-GenericFrontend(inputSize, delayLength) = GenericFrontend(delayLength, [zeros(Bool, inputSize) for i = 1:delayLength])
+#GenericFrontend(inputSize, delayLength) = GenericFrontend(delayLength, [zeros(Bool, inputSize) for i = 1:delayLength])
+GenericFrontend(inputSize, delayLength) = GenericFrontend(delayLength, RingBuffer(Bool, inputSize, delayLength))
 @nodegen mutable struct GenericSynapses{F, L, S} <: AbstractSynapses
   inputSize::Int
   outputSize::Int
@@ -50,11 +50,9 @@ function Base.show(io::IO, synapses::GenericSynapses)
   println(io, "GenericSynapses ($(synapses.inputSize) => $(synapses.outputSize))")
 end
 function frontend!(gf::GenericFrontend, I)
-  I_ = gf.D[end]
-  @inbounds for d = length(gf.D):-1:1
-    gf.D[d] = (d == 1 ? I : gf.D[d-1])
-  end
-  return I_
+  gf.D[:] = I
+  rotate!(gf.D)
+  return gf.D[:]
 end
 
 # TODO: Specify input and output types

@@ -137,13 +137,12 @@ function Base.show(io::IO, agent::Agent)
   println(io, "Agent:")
   println(io, "  $(length(agent.nodes)) nodes")
   println(io, "  $(length(agent.edges)) edges")
-  println(io, "  $(length(agent.hooks)) hooks")
   println(io, "  $(length(agent.groups)) groups")
 end
 
 # Prints a long representation of the agent
 # TODO: Use colors if enabled
-# TODO: Optionally elaborate nodes, edges, hooks, groups?
+# TODO: Optionally elaborate nodes, edges, groups?
 function Base.showall(io::IO, agent::Agent)
   Base.show(io, agent)
   println(io, "  Layout:")
