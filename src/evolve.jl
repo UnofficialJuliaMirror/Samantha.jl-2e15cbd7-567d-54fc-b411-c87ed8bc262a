@@ -9,10 +9,10 @@ end
 
 mutable struct EvolutionProfile
   mprofile::MutationProfile
-  # TODO: rprofile::RecombinationProfile
+  rprofile::RecombinationProfile
   factors::Dict{String,EvalFactor}
 end
-EvolutionProfile(mprofile) = EvolutionProfile(mprofile, Dict{String,EvalFactor}())
+EvolutionProfile(mprofile, rprofile) = EvolutionProfile(mprofile, rprofile, Dict{String,EvalFactor}())
 
 abstract type AbstractEvolutionMode end
 mutable struct GenericMode <: AbstractEvolutionMode

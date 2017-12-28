@@ -19,8 +19,11 @@
     (:conf, :a) => (0.1, nothing),
     (:conf, :b) => (0.1, nothing)
   )))
+  
+  rprofile = RecombinationProfile()
+  push!(rprofile.recombinations, CheapRecombination(0.1, 0.1))
 
-  eprofile = EvolutionProfile(mprofile)
+  eprofile = EvolutionProfile(mprofile, rprofile)
   emode = GenericMode(16, 100, 0.01, (150, 200), (0, 10), 0.0001)
   evstate = EvolutionState(eprofile, emode)
   seed!(evstate, agent)

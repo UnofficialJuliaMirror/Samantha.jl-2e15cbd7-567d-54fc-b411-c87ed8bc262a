@@ -12,5 +12,6 @@ export inputs, outputs, getindex, setindex!
 export params
 export merge, merge!
 
-export MutationProfile, InplaceMutation, mutate!
+export MutationProfile, InplaceMutation, ChangeEdgePatternMutation, mutate!
+export RecombinationProfile, CheapRecombination, recombine
 export EvalFactor, EvolutionProfile, EvolutionState, GenericMode, addfactor!, seed!

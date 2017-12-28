@@ -2,6 +2,7 @@
   include("core-test.jl")
   @test_broken "Interface Tests"
   include("mutate-test.jl")
+  include("recombine-test.jl")
   include("evolve-test.jl")
 
   @test_skip "GenericNeurons"

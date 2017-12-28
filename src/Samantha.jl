@@ -16,6 +16,7 @@ include("synapses/synapses.jl")
 include("agent.jl")
 include("interface.jl")
 include("mutate.jl")
+include("recombine.jl")
 include("evolve.jl")
 include("optimize.jl")
 

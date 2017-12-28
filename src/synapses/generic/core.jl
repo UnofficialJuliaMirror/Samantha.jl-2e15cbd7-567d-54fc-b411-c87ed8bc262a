@@ -10,8 +10,7 @@ export GenericConfig, GenericState, GenericSynapses
   D::RingBuffer{Bool}
   #ID::Vector{Int} # TODO: Wrong type?
 end
-#GenericFrontend(inputSize, delayLength) = GenericFrontend(delayLength, [zeros(Bool, inputSize) for i = 1:delayLength])
-GenericFrontend(inputSize, delayLength) = GenericFrontend(delayLength, RingBuffer(Bool, inputSize, delayLength))
+GenericFrontend(inputSize::Int, delayLength::Int) = GenericFrontend(delayLength, RingBuffer(Bool, inputSize, delayLength))
 @nodegen mutable struct GenericSynapses{F, L, S} <: AbstractSynapses
   inputSize::Int
   outputSize::Int
@@ -43,6 +42,11 @@ GenericSynapses(inputSize::Int, outputSize::Int; outputMask=1, condRate=0.1, tra
     ones(Bool, outputSize, inputSize),
     zeros(Float32, outputSize, inputSize)
   )
+
+### Edge Patterns ###
+
+@edgepattern GenericSynapses (:input=>GenericNeurons, :output=>GenericNeurons) sizes->(sizes[:input]*sizes[:output])
+#@edgepattern GenericSynapses (:input=>ConvNeurons, :reward=>GenericNeurons) sizes->(sizes[:input]*sizes[:reward])
 
 ### Methods ###
 

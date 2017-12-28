@@ -28,10 +28,14 @@
   @test prev_a != next_a
   run!(agent)
 
+  @test_skip "ChangeEdgePatternMutation Tests"
+  #=empty!(profile.mutations)
+  push!(profile.mutations, ChangeEdgePatternMutation(GenericSynapses, 0.5))
+  mutate!(agent, profile)
+  run!(agent)=#
+
   #=push!(profile.mutations, InsertNodeMutation(GenericNeurons, (64,)))
   mutate!(agent, profile)
   @test length(agent.nodes) == 3
   run!(agent)=#
-  
-  @test_skip "Other mutations"
 end
