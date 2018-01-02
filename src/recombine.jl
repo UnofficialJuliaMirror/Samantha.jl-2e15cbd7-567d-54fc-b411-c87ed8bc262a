@@ -62,4 +62,8 @@ function recombine!(cr::CheapRecombination, agent1::Agent, agent2::Agent, agent3
   end
 
   # FIXME: Copy layout, skipping non-existing nodes
+  agent3.layout = agent1.layout
+
+  # Clear agent3
+  clear!(agent3)
 end

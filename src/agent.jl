@@ -125,9 +125,16 @@ function deactivate!(agent::Agent, group::String)
 end
 
 # Mutates an agent with probability p for each mutatable parameter
-function mutate!(agent::Agent, p::Real)
+#=function mutate!(agent::Agent, p::Real)
   for node in values(agent.nodes)
     mutate!(node, p)
+  end
+end=#
+
+# Clears any transient data in an agent (such as learned weights or temporary values)
+function clear!(agent::Agent)
+  for node in values(agent.nodes)
+    clear!(root(node))
   end
 end
 

@@ -36,14 +36,13 @@
   @test all(name->haskey(emode.energies, name), keys(evstate.agents))
 
   addfactor!(eprofile, "test1") do agent, state
-    if !haskey(state, "temp")
-      state["temp"] = true
-    end
+    state["temp"] = true
     return 1
   end
+  setup(evstate)
   run!(evstate)
-  @test haskey(evstate.profile.factors["test1"].state, "temp")
-  @test all(score->score["test1"]==1, values(evstate.scores))
+  @test all(state->haskey(state["test1"], "temp"), values(evstate.states))
+  @test all(score->score["test1"]==true, values(evstate.scores))
 
   # TODO: Test birth/death bounding creates/destroys agents
 end

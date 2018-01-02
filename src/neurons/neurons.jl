@@ -34,6 +34,14 @@ NCPUCont{C,S} = CPUContainer{Neurons{C,S}}
 
 ### Methods ###
 
+function clear!(neurons::Neurons)
+  fill!(neurons.state.V, neurons.conf.c)
+  fill!(neurons.state.U, 0f0)
+  fill!(neurons.state.I, 0f0)
+  fill!(neurons.state.F, false)
+  fill!(neurons.state.T, 0f0)
+  fill!(neurons.state.θ, 0f0)
+end
 function Base.show(io::IO, neurons::Neurons)
   println(io, "Neurons ($(neurons.conf.size))")
 end

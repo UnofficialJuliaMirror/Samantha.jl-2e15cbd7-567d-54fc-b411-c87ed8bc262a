@@ -25,19 +25,25 @@ function ConvSynapses(inputSize::Tuple{Int,Int,Int}, filterSize::Int, numFilters
     rand(Float32, inputSize[1], filterSize, filterSize, numFilters) .* 0.3f0
   )
 end
+ConvSynapses(size::Tuple{Tuple{Int,Int,Int}, Int, Int, Int}; kwargs...) =
+  ConvSynapses(size...; kwargs...)
 
 ### Methods ###
 
+function clear!(synapses::ConvSynapses)
+  rand!(synapses.W, 0f0:0.01f0:0.3f0)
+end
 function Base.show(io::IO, synapses::ConvSynapses)
-  outputSize = (synapses.inputSize[2]-synapses.filterSize+1, synapses.inputSize[3]-synapses.filterSize+1, synapses.numFilters)
+  outputSize = output_size(synapses)
   println(io, "ConvSynapses ($(synapses.inputSize) => $(outputSize))")
   println(io, "  Filter Size: $(synapses.filterSize) x $(synapses.filterSize)")
   println(io, "  Stride: $(synapses.stride)")
   println(io, "  Learning Algorithm: $(synapses.learn)")
 end
-function Base.size(cs::ConvSynapses)
+Base.size(cs::ConvSynapses) = (cs.inputSize, cs.filterSize, cs.numFilters, cs.stride)
+function output_size(cs::ConvSynapses)
   # FIXME: Stride
-  outputSize = (cs.inputSize[2]-cs.filterSize+1, cs.inputSize[3]-cs.filterSize+1, cs.numFilters)
+  return (cs.inputSize[2]-cs.filterSize+1, cs.inputSize[3]-cs.filterSize+1, cs.numFilters)
 end
 
 function update!(f, cs, stride, W, I, G, F, O)

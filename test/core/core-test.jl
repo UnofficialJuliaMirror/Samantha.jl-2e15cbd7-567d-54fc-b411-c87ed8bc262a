@@ -48,6 +48,16 @@
     (agent["N3"], :output)
   ))
   run!(agent)
+  
+  # Clear
+  clear!(agent)
 
-  # TODO: Clone
+  # Deepcopy
+  agent2 = deepcopy(agent)
+  run!(agent2)
+
+  # Size
+  for (idx, node) in agent.nodes
+    @test size(root(node)) != nothing
+  end
 end

@@ -8,7 +8,7 @@ export GenericConfig, GenericState, GenericSynapses
   delayLength::Int
 
   D::RingBuffer{Bool}
-  #ID::Vector{Int} # TODO: Wrong type?
+  #ID::Vector{Int}
 end
 GenericFrontend(inputSize::Int, delayLength::Int) = GenericFrontend(delayLength, RingBuffer(Bool, inputSize, delayLength))
 @nodegen mutable struct GenericSynapses{F, L, S} <: AbstractSynapses
@@ -42,6 +42,7 @@ GenericSynapses(inputSize::Int, outputSize::Int; outputMask=1, condRate=0.1, tra
     ones(Bool, outputSize, inputSize),
     zeros(Float32, outputSize, inputSize)
   )
+GenericSynapses(size::Tuple{Int,Int}; kwargs...) = GenericSynapses(size[1], size[2]; kwargs...)
 
 ### Edge Patterns ###
 
@@ -50,9 +51,17 @@ GenericSynapses(inputSize::Int, outputSize::Int; outputMask=1, condRate=0.1, tra
 
 ### Methods ###
 
+function clear!(synapses::GenericSynapses)
+  clear!(synapses.frontend)
+  fill!(synapses.C, 0f0)
+  rand!(synapses.W, 0f0:0.01f0:0.3f0)
+  fill!(synapses.T, 0f0)
+end
+clear!(frontend::GenericFrontend) = clear!(frontend.D)
 function Base.show(io::IO, synapses::GenericSynapses)
   println(io, "GenericSynapses ($(synapses.inputSize) => $(synapses.outputSize))")
 end
+Base.size(synapses::GenericSynapses) = (synapses.inputSize, synapses.outputSize)
 function frontend!(gf::GenericFrontend, I)
   gf.D[:] = I
   rotate!(gf.D)

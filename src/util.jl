@@ -62,3 +62,4 @@ function Base.setindex!(rb::RingBuffer, value, idx1, idx2)
   setindex!(rb.buf, value, idx1, npos)
 end
 Base.endof(rb::RingBuffer) = rb.buf[end,rb.pos]
+clear!(rb::RingBuffer{T}) where T = fill!(rb.buf, zero(T))
