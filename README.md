@@ -29,6 +29,7 @@ It is strongly recommended to use a recent Linux kernel, simply due to the rapid
 ### Required Packages:
 * MacroTools - For ensuring a consistent API and easing package development
 * HDF5 - For on-disk storage and file mmap  
+* Requires - For inclusion of additional code to support optional packages  
 
 ### Optional Packages:
 * Distributions - For richer choices of mutation probability distributions  
