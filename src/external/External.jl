@@ -17,7 +17,3 @@ using Requires
     convert(A, round.(rand(gen, size(arr)...)))
   end
 end
-
-#@require Tasklets begin
-  # FIXME: Include all tasklets
-#end
