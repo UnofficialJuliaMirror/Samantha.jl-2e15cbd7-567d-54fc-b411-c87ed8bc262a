@@ -8,7 +8,7 @@ for arg in ARGS
   end
 end
 
-using Base.Test
+using Test
 
 # Setup global configuration
 const SAMANTHA_TMP_HOME = mktempdir()
@@ -18,19 +18,19 @@ const SAMANTHA_LOG_PATH = joinpath(SAMANTHA_TMP_HOME, "logs")
 mkdir(SAMANTHA_LOG_PATH)
 
 try
-  info("Loading Samantha")
-  include(joinpath("..", "src", "Samantha.jl")); importall Samantha
+  @info "Loading Samantha"
+  include(joinpath("..", "src", "Samantha.jl")); using .Samantha
 
   if path == "RUNME.jl"
-    info("Running All Tests")
+    @info "Running All Tests"
   else
-    info("Running Test $path")
+    @info "Running Test $path"
   end
   include(path)
 
-  info("Tests Finished")
+  @info "Tests Finished"
 catch err
   try rm(SAMANTHA_TMP_HOME, true, true) end
-  warn("Error encountered")
+  @warn "Error encountered"
   rethrow(err)
 end

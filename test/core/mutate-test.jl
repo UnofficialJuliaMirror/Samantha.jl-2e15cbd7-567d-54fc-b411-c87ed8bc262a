@@ -16,26 +16,26 @@
 
   run!(agent)
 
-  profile = MutationProfile()
+  profile = AbstractMutation[]
 
-  push!(profile.mutations, InplaceMutation(GenericNeurons, Dict(
+  push!(profile, InplaceMutation(GenericNeurons, Dict(
     (:conf, :a) => (1, nothing),
     (:conf, :b) => (0.5, nothing)
   )))
   prev_a = (n1.conf.a, n2.conf.a)
-  mutate!(agent, profile)
+  mutate!(profile, agent)
   next_a = (n1.conf.a, n2.conf.a)
   @test prev_a != next_a
   run!(agent)
 
   @test_skip "ChangeEdgePatternMutation Tests"
-  #=empty!(profile.mutations)
-  push!(profile.mutations, ChangeEdgePatternMutation(GenericSynapses, 0.5))
-  mutate!(agent, profile)
+  #=empty!(profile)
+  push!(profile, ChangeEdgePatternMutation(GenericSynapses, 0.0))
+  mutate!(profile, agent)
   run!(agent)=#
 
-  #=push!(profile.mutations, InsertNodeMutation(GenericNeurons, (64,)))
-  mutate!(agent, profile)
+  #=push!(profile, InsertNodeMutation(GenericNeurons, (64,)))
+  mutate!(profile, agent)
   @test length(agent.nodes) == 3
   run!(agent)=#
 end

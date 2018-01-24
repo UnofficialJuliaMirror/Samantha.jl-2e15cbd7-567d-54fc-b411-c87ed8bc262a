@@ -5,5 +5,3 @@ abstract type AbstractLoadable end
 abstract type AbstractNode end
 abstract type AbstractNeurons <: AbstractNode end
 abstract type AbstractSynapses <: AbstractNode end
-abstract type AbstractMutation end
-abstract type AbstractRecombination end

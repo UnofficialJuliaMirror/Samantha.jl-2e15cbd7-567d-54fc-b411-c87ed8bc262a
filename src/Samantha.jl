@@ -17,8 +17,8 @@ include("agent.jl")
 include("interface.jl")
 include("mutate.jl")
 include("recombine.jl")
+include("constrain.jl")
 include("evolve.jl")
-include("optimize.jl")
 
 # Standard Library
 include("Stdlib.jl")

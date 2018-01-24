@@ -15,34 +15,33 @@
   ))
 
   mprofile = MutationProfile()
-  push!(mprofile.mutations, InplaceMutation(GenericNeurons, Dict(
+  push!(mprofile, InplaceMutation(GenericNeurons, Dict(
     (:conf, :a) => (0.1, nothing),
     (:conf, :b) => (0.1, nothing)
   )))
   
   rprofile = RecombinationProfile()
-  push!(rprofile.recombinations, CheapRecombination(0.1, 0.1))
+  push!(rprofile, CheapRecombination(0.1, 0.1))
 
-  eprofile = EvolutionProfile(mprofile, rprofile)
-  emode = GenericMode(16, 100, 0.01, (150, 200), (0, 10), 0.0001)
-  evstate = EvolutionState(eprofile, emode)
-  seed!(evstate, agent)
-  @test length(evstate.seeds) == 1
+  eprofile = EvolutionProfile(mprof=mprofile, rprof=rprofile)
+  seopt = SimpleEnergyOptimizer(16, 100, 0.01, (150, 200), (0, 10), 0.0001)
+  estate = EvolutionState(optimizer=seopt)
+  add_seed!(eprof, agent)
 
   for i = 1:10
-    run!(evstate)
+    run!(estate, eprof)
   end
-  @test length(evstate.agents) >= 1
-  @test all(name->haskey(emode.energies, name), keys(evstate.agents))
+  @test length(estate.agents) >= 1
+  @test all(name->haskey(seopt.energies, name), keys(estate.agents))
 
   addfactor!(eprofile, "test1") do agent, state
     state["temp"] = true
     return 1
   end
-  setup(evstate)
-  run!(evstate)
-  @test all(state->haskey(state["test1"], "temp"), values(evstate.states))
-  @test all(score->score["test1"]==true, values(evstate.scores))
+  setup(estate)
+  run!(estate)
+  @test all(state->haskey(state["test1"], "temp"), values(estate.states))
+  @test all(score->score["test1"]==true, values(estate.scores))
 
   # TODO: Test birth/death bounding creates/destroys agents
 end

@@ -54,7 +54,7 @@ macro nodegen(ex::Expr)
   load = Expr(:call, T)
   store = quote settype!(ldbl, $(length(TPN) > 0 ? Expr(:curly, T, TPN...) : T)) end
   sync = quote end
-  for (name,typ) in map(f->(f.args...), fields)
+  for (name,typ) in map(f->(f.args...,), fields)
     push!(final.args, esc(quote
       Base.getindex(__data::$T, ind::Val{$(QuoteNode(name))}) = __data.$name
     end))

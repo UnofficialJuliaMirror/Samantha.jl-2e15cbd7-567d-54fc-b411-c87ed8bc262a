@@ -46,11 +46,20 @@ GenericSynapses(size::Tuple{Int,Int}; kwargs...) = GenericSynapses(size[1], size
 
 ### Edge Patterns ###
 
-@edgepattern GenericSynapses (:input=>GenericNeurons, :output=>GenericNeurons) sizes->(sizes[:input]*sizes[:output])
-#@edgepattern GenericSynapses (:input=>ConvNeurons, :reward=>GenericNeurons) sizes->(sizes[:input]*sizes[:reward])
+#@edgepattern GenericSynapses (:input=>GenericNeurons, :output=>GenericNeurons) sizes->(sizes[:input]*sizes[:output])
+@edgepattern GenericSynapses (:input=>ConvNeurons, :reward=>GenericNeurons) sizes->(sizes[:input]*sizes[:reward])
 
 ### Methods ###
 
+function resize!(synapses::GenericSynapses, new_size)
+  old_size = size(synapses)
+  synapses.inputSize = new_size[1]
+  synapses.outputSize = new_size[2]
+  synapses.C = resize_arr(synapses.C, new_size)
+  synapses.W = resize_arr(synapses.W, new_size)
+  synapses.M = resize_arr(synapses.M, new_size)
+  synapses.T = resize_arr(synapses.T, new_size)
+end
 function clear!(synapses::GenericSynapses)
   clear!(synapses.frontend)
   fill!(synapses.C, 0f0)
@@ -61,11 +70,13 @@ clear!(frontend::GenericFrontend) = clear!(frontend.D)
 function Base.show(io::IO, synapses::GenericSynapses)
   println(io, "GenericSynapses ($(synapses.inputSize) => $(synapses.outputSize))")
 end
-Base.size(synapses::GenericSynapses) = (synapses.inputSize, synapses.outputSize)
+Base.size(synapses::GenericSynapses) = (synapses.outputSize, synapses.inputSize)
 function frontend!(gf::GenericFrontend, I)
   gf.D[:] = I
+  # TODO: Leverage ID (individual delays)
+  I_ = gf.D[:]
   rotate!(gf.D)
-  return gf.D[:]
+  return I_
 end
 
 # TODO: Specify input and output types
@@ -87,8 +98,8 @@ function _eforward!(scont::CPUContainer{S}, input, output) where S<:GenericSynap
 
   # Article: Unsupervised learning of digit recognition using spike-timing-dependent plasticity
   # Authors: Peter U. Diehl and Matthew Cook
-  @inbounds for i = indices(W, 2)
-    @inbounds @simd for n = indices(W, 1)
+  @inbounds for i = axes(W, 2)
+    @inbounds @simd for n = axes(W, 1)
       # Convolve weights with input
       C[n,i] += M[n,i] * ((W[n,i] * I_[i]) + (condRate * -C[n,i] * !I_[i]))
       O[n] += W[n,i] * M[n,i] * C[n,i] * I_[i]

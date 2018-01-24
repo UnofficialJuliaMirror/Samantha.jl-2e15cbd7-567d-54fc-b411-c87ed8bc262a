@@ -47,11 +47,11 @@ function output_size(cs::ConvSynapses)
 end
 
 function update!(f, cs, stride, W, I, G, F, O)
-  @inbounds for fj = indices(W, 3)
-    @inbounds for fi = indices(W, 2)
-      @inbounds for fc = indices(W, 1)
-        @inbounds for oj = indices(O, 2)
-          @inbounds for oi = indices(O, 1)
+  @inbounds for fj = axes(W, 3)
+    @inbounds for fi = axes(W, 2)
+      @inbounds for fc = axes(W, 1)
+        @inbounds for oj = axes(O, 2)
+          @inbounds for oi = axes(O, 1)
             I_ = Float32(I[fc, oi+fi-1, oj+fj-1]) #Float32(I[fc, (stride*(oi-1))+fi, (stride*(oj-1))+fj])
 
             # Convolve weights with inputs
@@ -65,11 +65,11 @@ end
 function learn!(f, cs, stride, W, I, G, F, O)
   lrn = cs.learn
   α_pre, α_post, xtar, Wmax, μ = lrn.α_pre, lrn.α_post, lrn.xtar, lrn.Wmax, lrn.μ
-  @inbounds for oj = indices(O, 2)
-    @inbounds for oi = indices(O, 1)
-      @inbounds for fj = indices(W, 3)
-        @inbounds for fi = indices(W, 2)
-          @inbounds @simd for fc = indices(W, 1)
+  @inbounds for oj = axes(O, 2)
+    @inbounds for oi = axes(O, 1)
+      @inbounds for fj = axes(W, 3)
+        @inbounds for fi = axes(W, 2)
+          @inbounds @simd for fc = axes(W, 1)
             I_ = Float32(I[fc, oi+fi-1, oj+fj-1]) # TODO: Enable stride: Float32(I[fc, (stride*(oi-1))+fi, (stride*(oj-1))+fj])
 
             # Learn
@@ -94,7 +94,7 @@ function _eforward!(scont::CPUContainer{S}, input, output) where S<:ConvSynapses
   fill!(O, 0f0)
 
   # Convolve
-  @inbounds for f = indices(W, 4)
+  @inbounds for f = axes(W, 4)
     update!(f, cs, stride, W, I, G, F, O)
     learn!(f, cs, stride, W, I, G, F, O)
   end

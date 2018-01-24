@@ -58,7 +58,7 @@ end
 
 # Deletes an edge
 function deledge!(agent::Agent, src::String, dst::String, op::Symbol)
-  edges = find(edge->(edge[1]==src&&edge[2]==dst&&edge[3]==op), agent.edges)
+  edges = findall(edge->(edge[1]==src&&edge[2]==dst&&edge[3]==op), agent.edges)
   @assert length(edges) != 0 "No such edge found with src: $src, dst: $dst, op: $op"
   @assert length(edges) < 2 "Multiple matching edges returned"
   deleteat!(agent.edges, edges[1])

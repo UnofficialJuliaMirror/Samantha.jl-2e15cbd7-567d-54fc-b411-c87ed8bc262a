@@ -16,7 +16,7 @@ mutable struct Loadable <: AbstractLoadable
   h5File::HDF5.HDF5File
   dataPath::String
   h5Data::Union{HDF5.HDF5File,HDF5.HDF5Group,HDF5.HDF5Dataset}
-  branch::Union{AbstractBranch,Void}
+  branch::Union{AbstractBranch,Nothing}
 end
 Loadable(filePath, h5File, dataPath, h5Data) =
   Loadable(filePath, h5File, dataPath, h5Data, nothing)
@@ -27,9 +27,9 @@ end
 
 mutable struct LoadableBranch{T} <: AbstractBranch
   id::String
-  value::Union{T,Void}
+  value::Union{T,Nothing}
   ldbl::AbstractLoadable
-  parent::Union{AbstractBranch,Void}
+  parent::Union{AbstractBranch,Nothing}
   children::Vector{AbstractBranch}
   status::Symbol
 end

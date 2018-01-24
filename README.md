@@ -6,6 +6,7 @@ Spiking neural network engine written in Julia, which is primarily aimed at crea
 
 ## Goals
 * High-performance spiking neural network core  
+* Adaptive agent evolution system  
 * Stable real-time operation and interactivity  
 * Flexible choice of various algorithms and parameters  
 * Persistence of data at the filesystem level via file mmap  
@@ -13,7 +14,7 @@ Spiking neural network engine written in Julia, which is primarily aimed at crea
 * Efficient usage of high-performance network fabrics  
 
 ## Installation
-Install a supported version of Julia (currently 0.6 or greater) on a supported OS.  
+Install a supported version of Julia (currently 0.7-DEV or greater) on a supported OS.  
 ```
 Pkg.clone("https://gitlab.com/Samantha.ai/Samantha.jl")
 ```
@@ -30,7 +31,7 @@ It is strongly recommended to use a recent Linux kernel, simply due to the rapid
 * HDF5 - For on-disk storage and file mmap  
 
 ### Optional Packages:
-None yet!  
+* Distributions - For richer choices of mutation probability distributions  
 
 ## Repository Layout
 LICENSE.md - License file  

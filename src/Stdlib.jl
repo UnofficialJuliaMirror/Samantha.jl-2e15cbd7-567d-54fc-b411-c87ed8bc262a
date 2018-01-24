@@ -10,8 +10,8 @@ module Stdlib
         Base.include(joinpath(@__DIR__, "stdlib", lib, "includes.jl"))
       else
         # If no includes.jl, load in any order
-        for file in filter(x->endswith(x,".jl"), readdir(joinpath(@__DIR__, "stdlib", lib)))
-          path = joinpath(@__DIR__, "stdlib", lib, file)
+        for f in filter(x->endswith(x,".jl"), readdir(joinpath(@__DIR__, "stdlib", lib)))
+          path = joinpath(@__DIR__, "stdlib", lib, f)
           Base.include(path)
         end
       end

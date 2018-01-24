@@ -1,17 +1,25 @@
+export AbstractMutation, AgentMutation, NodeMutation, EdgeMutation
+export InplaceMutation, ChangeEdgePatternMutation
+
 ### Types ###
 
-struct InplaceMutation{T} <: AbstractMutation
-  nodetype::T
+abstract type AbstractMutation end
+abstract type AgentMutation <: AbstractMutation end
+abstract type NodeMutation <: AbstractMutation end
+abstract type EdgeMutation <: AbstractMutation end
+
+struct InplaceMutation{T} <: NodeMutation
+  nodetype::Type{T}
   params::Dict{NTuple{N,Val} where N, Tuple}
 end
+# FIXME: Allow params to have key of Symbol
 function InplaceMutation(nodetype, params)
-  symparams = map(kv->Pair(Tuple(map(key->Val{key}(),kv[1])),kv[2]), params)
-  newparams = Dict{NTuple{N,Val} where N, Tuple}(symparams)
-  InplaceMutation(nodetype, newparams)
+  symparams = Dict{NTuple{N,Val} where N, Tuple}((Pair(map(key->Val(key),kv[1]),kv[2]) for kv in params))
+  InplaceMutation(nodetype, symparams)
 end
 # TODO: Constructor for "nesting" other InplaceMutations
 
-mutable struct ChangeEdgePatternMutation <: AbstractMutation
+mutable struct ChangeEdgePatternMutation <: AgentMutation
   nodetype::Type
   switchProb::Real
 end
@@ -24,18 +32,14 @@ mutable struct DeleteNodeMutation <: AbstractMutation
   pattern::Dict{Symbol,Type} # TODO: Support multiple nodes for a single operator
 end=#
 
-struct MutationProfile
-  mutations::Vector{AbstractMutation}
-  # TODO: Mask
-end
-MutationProfile() = MutationProfile(AbstractMutation[])
+const MutationProfile = Vector{AbstractMutation}
 
-# TODO: More than one mutation per cycle?
-function mutate!(agent::Agent, profile::MutationProfile)
+# TODO: More than one mutation per cycle? Or maybe try to apply ALL mutations at once???
+function mutate!(profile::MutationProfile, agent::Agent)
   # Determine which mutations are possible
   mutations = []
-  for m in profile.mutations
-    if hasmatches(agent, m)
+  for m in profile
+    if hasmatches(m, agent)
       push!(mutations, m)
     end
   end
@@ -43,16 +47,16 @@ function mutate!(agent::Agent, profile::MutationProfile)
   if length(mutations) > 0
     # Pick one mutation randomly and apply it
     mutation = mutations[rand(eachindex(mutations))]
-    mutate!(agent, mutation)
+    mutate!(mutation, agent)
   end
 
   return agent
 end
 
 ### Match Checking ###
-hasmatches(agent::Agent, mutation::InplaceMutation) =
+hasmatches(mutation::InplaceMutation, agent::Agent) =
   any(node->typeof(transient(node))<:mutation.nodetype, values(agent.nodes))
-hasmatches(agent::Agent, mutation::ChangeEdgePatternMutation) = true
+hasmatches(mutation::ChangeEdgePatternMutation, agent::Agent) = true
 # FIXME: Enable once tests pass
 #  any(node->typeof(transient(node))<:mutation.nodetype, values(agent.nodes))
 #=function hasmatches(agent::Agent, mutation::InsertNodeMutation)
@@ -66,7 +70,7 @@ end=#
 
 ### Mutations ###
 
-function mutate!(agent::Agent, mutation::InplaceMutation)
+function mutate!(mutation::InplaceMutation, agent::Agent)
   # Pick random matching node
   nodes = filter(node->typeof(node[2])<:mutation.nodetype, [(id,transient(node)) for (id,node) in agent.nodes])
   id, node = rand(nodes)
@@ -75,7 +79,7 @@ function mutate!(agent::Agent, mutation::InplaceMutation)
     node[path] = mutate!(node[path], prob, gen)
   end
 end
-function mutate!(agent::Agent, mutation::ChangeEdgePatternMutation)
+function mutate!(mutation::ChangeEdgePatternMutation, agent::Agent)
   # Pick random matching node
   nodes = filter(node->typeof(node[2])<:mutation.nodetype, [(idx,transient(node)) for (idx,node) in agent.nodes])
   idx, node = rand(nodes)
@@ -83,15 +87,15 @@ function mutate!(agent::Agent, mutation::ChangeEdgePatternMutation)
   # Pick a random edge pattern
   valid_patterns = filter((T,pattern)->typeof(node)<:T, EDGE_PATTERNS)
   new_pattern, sizefunc = rand(rand(valid_patterns)[2])
-  info("New Pattern:")
-  info(typeof(new_pattern))
-  info(new_pattern)
+  @info "New Pattern:"
+  @info typeof(new_pattern)
+  @info new_pattern
 
   # Get the old edge pattern
   old_pattern = Dict(map(edge->edge[3]=>typeof(root(agent.nodes[edge[2]])), filter(edge->edge[1]==idx, agent.edges)))
-  info("Old Pattern:")
-  info(typeof(old_pattern))
-  info(old_pattern)
+  @info "Old Pattern:"
+  @info typeof(old_pattern)
+  @info old_pattern
 
   # Determine minimum required changes
   req_changes = Pair{Symbol,Symbol}[]
@@ -110,38 +114,46 @@ function mutate!(agent::Agent, mutation::ChangeEdgePatternMutation)
       push!(req_changes, :delete => op)
     end
   end
-  info(req_changes)
+  @info req_changes
 
   # Apply minimum required changes
   old_edgeset = Dict(map(pat->pat[1]=>filter(edge->(edge[1]==idx)&&(edge[3]==pat[1]), agent.edges)[1][2], old_pattern))
-  info("Old Edgeset:")
-  info(old_edgeset)
-  new_edgeset = Dict{Symbol,String}()
+  @info "Old Edgeset:"
+  @info old_edgeset
+  #new_edgeset = Dict{Symbol,String}()
   for (change,op) in req_changes
     if change == :switch
       deledge!(agent, idx, old_edgeset[op], op)
-      if rand() < mutation.switchProb && length(map(node->typeof(root(node))<:new_pattern[op], values(agent.nodes))) > 0
+      if rand() < mutation.switchProb && length(map(existing_node->typeof(root(existing_node))<:new_pattern[op], values(agent.nodes))) > 0
         # Use an existing node instead of creating a new one
         existing_nodes = filter((existing_idx,existing_node)->typeof(root(existing_node))<:new_pattern[op], agent.nodes)
+        # TODO: Delete existing node's old edges?
         addedge!(agent, idx, rand(existing_nodes)[2], op)
       else
-        new_size = sizefunc(Dict(map((old_op,old_idx)->(old_op=>size(root(agent.nodes[old_idx]))), old_edgeset)))
-        new_node = randnode(new_pattern[op], new_size)
+        new_node = randnode(new_pattern[op])
         new_idx = addnode!(agent, new_node)
         addedge!(agent, idx, new_idx, op)
       end
     elseif change == :insert
-      new_size = sizefunc(Dict(map(old_edgepair->(old_edgepair[1]=>size(root(agent.nodes[old_edgepair[2]]))), old_edgeset)))
-      new_node = randnode(new_pattern[op], new_size)
+      # FIXME: Also give the option to use an existing node
+      new_node = randnode(new_pattern[op])
       new_idx = addnode!(agent, new_node)
       addedge!(agent, idx, new_idx, op)
     elseif change == :delete
       deledge!(agent, idx, old_edgeset[op], op)
     end
   end
+
   # FIXME: Apply extra changes as random walk within new pattern
-  # FIXME: Prune disconnected nodes
-  error("Not implemented")
+  # FIXME: Reshape src node if necessary
+  #new_size = sizefunc(Dict(map((old_op,old_idx)->(old_op=>size(root(agent.nodes[old_idx]))), old_edgeset)))
+  new_size = sizefunc(Dict(map(old_edgepair->(old_edgepair[1]=>size(root(agent.nodes[old_edgepair[2]]))), old_edgeset)))
+  if size(node) != new_size
+    agent.nodes[idx] = resize!(node, new_size)
+  end
+
+  # Prune disconnected nodes
+  prune!(agent)
 end
 #=function mutate!(agent::Agent, mutation::InsertNodeMutation)
   # Create node and attach to agent
@@ -155,12 +167,15 @@ end=#
 # Determines whether or not to mutate a parameter
 mutate!(val, prob::Real, gen) = (prob >= rand() ? mutate!(val, gen) : val)
 
-# Default mutations when no generator is specified
-# TODO: Respect bounds()
-mutate!(num::N, gen::Void) where N<:Number = rand(N)
-#=function mutate!(arr::AbstractArray, gen::Void)
+function mutate!(arr::AbstractArray, gen)
   for i in eachindex(arr)
     arr[i] = mutate!(arr[i], gen)
   end
   return arr
-end=#
+end
+
+### Default Generators ###
+
+# TODO: Respect bounds()
+mutate!(num::N, gen::Nothing) where N<:Number = rand(N)
+mutate!(num::N, gen::Vector) where N = convert(N, rand(gen))

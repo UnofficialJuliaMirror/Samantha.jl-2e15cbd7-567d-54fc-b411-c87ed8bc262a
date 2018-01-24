@@ -1,16 +1,19 @@
-struct RecombinationProfile
-  recombinations::Vector{AbstractRecombination}
-end
-RecombinationProfile() = RecombinationProfile(AbstractRecombination[])
+### Types ###
+
+abstract type AbstractRecombination end
+
+const RecombinationProfile = Vector{AbstractRecombination}
 
 struct CheapRecombination <: AbstractRecombination
   nodeAddProb::Real
   edgeAddProb::Real
 end
 
+### Methods ###
+
 function recombine(profile::RecombinationProfile, agent1::Agent, agent2::Agent)
   agent3 = Agent()
-  for recombination in profile.recombinations
+  for recombination in profile
     recombine!(recombination, agent1, agent2, agent3)
   end
   return agent3
@@ -38,7 +41,7 @@ function recombine!(cr::CheapRecombination, agent1::Agent, agent2::Agent, agent3
   end
 
   for edge1 in agent1.edges
-    if contains(==, agent2.edges, edge1)
+    if any(edge->edge==edge1, agent2.edges)
       # Copy all exactly matching edges
       push!(agent3.edges, edge1)
     else
@@ -51,7 +54,7 @@ function recombine!(cr::CheapRecombination, agent1::Agent, agent2::Agent, agent3
     end
   end
   for edge2 in agent2.edges
-    if !contains(==, agent1.edges, edge2)
+    if !any(edge->edge==edge2, agent1.edges)
       # If agent3 contains matching nodes, optionally add edge1
       if all(haskey.(agent3.nodes, edge2[1:2]))
         if rand() < cr.edgeAddProb

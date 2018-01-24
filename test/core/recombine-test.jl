@@ -17,7 +17,7 @@
   agent2 = deepcopy(agent1)
 
   profile = RecombinationProfile()
-  push!(profile.recombinations, CheapRecombination(0.1, 0.1))
+  push!(profile, CheapRecombination(0.1, 0.1))
 
   agent3 = recombine(profile, agent1, agent2)
   run!(agent3)

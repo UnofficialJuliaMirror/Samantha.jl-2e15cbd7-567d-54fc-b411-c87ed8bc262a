@@ -5,6 +5,7 @@ import Base: size, setindex!, getindex, broadcast!, Broadcast.fill!, Broadcast.f
 ### Exports ###
 
 export ZeroArray, RingBuffer
+export fasttanh, canthread
 
 ### Types ###
 
@@ -12,8 +13,8 @@ export ZeroArray, RingBuffer
 mutable struct ZeroArray{T, N} <: DenseArray{T, N}
   size::NTuple{N, Int}
 end
-ZeroArray{N}(T::Type, size::NTuple{N,Int}) = ZeroArray{T,N}(size)
-ZeroArray{T,N}(arr::DenseArray{T,N}) = ZeroArray{T,N}(size(arr))
+ZeroArray(T::Type, size::NTuple{N,Int}) where N = ZeroArray{T,N}(size)
+ZeroArray(arr::DenseArray{T,N}) where {T,N} = ZeroArray{T,N}(size(arr))
 
 mutable struct RingBuffer{T}
   buf::AbstractArray{T,2}
@@ -27,12 +28,12 @@ RingBuffer(T, width, length) = RingBuffer(zeros(T, width, length), 1)
 
 Base.size(za::ZeroArray) = za.size
 # TODO: Check for OOB situation?
-Base.setindex!{T,N}(za::ZeroArray{T,N}, value, idx...) = zero(T)
-Base.getindex{T,N}(za::ZeroArray{T,N}, idx...) = zero(T)
+Base.setindex!(za::ZeroArray{T,N}, value, idx...) where {T,N} = zero(T)
+Base.getindex(za::ZeroArray{T,N}, idx...) where {T,N} = zero(T)
 # TODO: More broadcast overrides
-Base.broadcast!{T,N}(f, za::ZeroArray{T,N}, args...) = za
-Base.Broadcast.fill!{T,N}(za::ZeroArray{T,N}, value) = za
-Base.Broadcast.fill{T,N}(za::ZeroArray{T,N}, value::T) =
+Base.broadcast!(f, za::ZeroArray{T,N}, args...) where {T,N} = za
+Base.Broadcast.fill!(za::ZeroArray{T,N}, value) where {T,N} = za
+Base.Broadcast.fill(za::ZeroArray{T,N}, value::T) where {T,N} =
   (value == zero(T) ? za : error("Cannot fill a ZeroArray with a non-zero element"))
 
 
@@ -43,23 +44,32 @@ function rotate!(rb::RingBuffer)
     rb.pos = 1
   end
 end
+function _rbindex(rb::RingBuffer, idx)
+  @assert 0 <= idx <= size(rb.buf, 2)-1 "Invalid RingBuffer index: $idx"
+  npos = rb.pos - idx
+  if npos < 1
+    npos += size(rb.buf, 2)
+  end
+  npos
+end
 Base.getindex(rb::RingBuffer, idx) = getindex(rb.buf, idx, rb.pos)
-function Base.getindex(rb::RingBuffer, idx1, idx2)
-  @assert 1 < idx2 < size(rb.buf, 2) "Invalid RingBuffer position: $idx2"
-  npos = rb.pos - idx2
-  if npos < 1
-    npos += size(rb.buf, 2)
-  end
-  getindex(rb.buf, idx1, npos)
-end
+Base.getindex(rb::RingBuffer, idx1, idx2::Int) = getindex(rb.buf, idx1, _rbindex(rb, idx2))
 Base.setindex!(rb::RingBuffer, value, idx) = setindex!(rb.buf, value, idx, rb.pos)
-function Base.setindex!(rb::RingBuffer, value, idx1, idx2)
-  @assert 1 < idx2 < size(rb.buf, 2) "Invalid RingBuffer position: $idx2"
-  npos = rb.pos - idx2
-  if npos < 1
-    npos += size(rb.buf, 2)
-  end
-  setindex!(rb.buf, value, idx1, npos)
-end
+Base.setindex!(rb::RingBuffer, value, idx1, idx2::Int) = setindex!(rb.buf, value, idx1, _rbindex(rb, idx2))
 Base.endof(rb::RingBuffer) = rb.buf[end,rb.pos]
 clear!(rb::RingBuffer{T}) where T = fill!(rb.buf, zero(T))
+
+
+# Returns a resized array, with as many existing entries copied as possible
+function resize_array(arr::Array{T,N} where {T,N}, new_size::NTuple{N,Int} where N, fill_value=zero(T))
+  old_size = size(arr)
+  new_arr = fill(fill_value, new_size)
+  shared_region = CartesianRange(min.(old_size, new_size))
+  copy!(new_arr, shared_region, arr, shared_region)
+end
+
+### Miscellaneous Utilities ###
+
+fasttanh(x) = x * ( 27 + x * x ) / ( 27 + 9 * x * x )
+
+canthread() = SAMANTHA_THREADS && !Threads.in_threaded_loop.x && Threads.nthreads() > 1
