@@ -14,4 +14,5 @@ export merge, merge!
 
 export MutationProfile, InplaceMutation, ChangeEdgePatternMutation, mutate!
 export RecombinationProfile, CheapRecombination, recombine
-export EvalFactor, EvolutionProfile, EvolutionState, GenericMode, addfactor!, seed!, setup
+export EvolutionOptimizer, EnergyOptimizer, ProgrammableLifecycle, EvolutionProfile, EvolutionState
+export add_goal!, del_goal!, add_agent!, del_agent!, step!, score!, optimize!, add_seed!, del_seed!

@@ -23,23 +23,21 @@
   rprofile = RecombinationProfile()
   push!(rprofile, CheapRecombination(0.1, 0.1))
 
-  eprofile = EvolutionProfile(mprof=mprofile, rprof=rprofile)
-  seopt = SimpleEnergyOptimizer(16, 100, 0.01, (150, 200), (0, 10), 0.0001)
-  estate = EvolutionState(optimizer=seopt)
-  add_seed!(eprof, agent)
+  eprofile = EvolutionProfile(mutations=mprofile, recombinations=rprofile, optimizer=EnergyOptimizer(16, 100, 0.01, (150, 200), (0, 10), 0.0001))
+  estate = EvolutionState()
+  add_seed!(eprofile, agent)
 
   for i = 1:10
-    run!(estate, eprof)
+    run!(estate, eprofile)
   end
   @test length(estate.agents) >= 1
-  @test all(name->haskey(seopt.energies, name), keys(estate.agents))
+  @test all(name->haskey(eprofile.optimizer.energies, name), keys(estate.agents))
 
-  addfactor!(eprofile, "test1") do agent, state
+  add_goal!(eprofile, "test1") do agent, state
     state["temp"] = true
-    return 1
+    1
   end
-  setup(estate)
-  run!(estate)
+  run!(estate, eprofile)
   @test all(state->haskey(state["test1"], "temp"), values(estate.states))
   @test all(score->score["test1"]==true, values(estate.scores))
 

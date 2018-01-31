@@ -1,5 +1,3 @@
-import Base: delete!
-
 ### Types ###
 
 """
@@ -10,11 +8,11 @@ Abstract type for optimizers of evolution simulations.
 abstract type EvolutionOptimizer end
 
 """
-    SimpleEnergyOptimizer <: EvolutionOptimizer
+    EnergyOptimizer <: EvolutionOptimizer
 
 Energy-based evolution optimizer.
 """
-mutable struct SimpleEnergyOptimizer <: EvolutionOptimizer
+mutable struct EnergyOptimizer <: EvolutionOptimizer
   capacity::Int
   initialEnergy::Float64
   energyDecay::Float64
@@ -24,27 +22,35 @@ mutable struct SimpleEnergyOptimizer <: EvolutionOptimizer
   energies::Dict{String,Float64}
   # TODO: lifetimes
 end
+EnergyOptimizer(capacity, initialEnergy, energyDecay, birthBounds, deathBounds, accidentProb) =
+  EnergyOptimizer(
+    capacity,
+    initialEnergy,
+    energyDecay,
+    birthBounds,
+    deathBounds,
+    accidentProb,
+    Dict{String,Float64}())
 
 """
-    AgentProvider
+    LifecycleManager
 
-Abstract type for seed agent providers.
+Abstract type for managers of agent lifecycles.
 """
-abstract type AgentProvider end
-
-"""
-    AgentReaper
-
-Abstract type for reapers of dead/expired agents.
-"""
-abstract type AgentReaper end
+abstract type LifecycleManager end
 
 """
-    SimpleReaper <: AgentReaper
+    ProgrammableLifecycle <: LifecycleManager
 
-Simple agent reaper which just deletes the reaped agent.
+Simple lifecycle manager which exposes seeding and reaping via function hooks.
 """
-struct SimpleReaper <: AgentReaper end
+struct ProgrammableLifecycle <: LifecycleManager
+  agent_pool::Dict{String, Agent}
+  seed_func::Function
+  reap_func::Function
+end
+ProgrammableLifecycle(seed_func=(agent_pool)->rand(collect(values(agent_pool))), reap_func=agent->nothing) =
+  ProgrammableLifecycle(Dict{String, Agent}(), seed_func, reap_func)
 
 """
     EvolutionProfile
@@ -54,28 +60,25 @@ for convenience or for use as default settings.
 """
 struct EvolutionProfile
   optimizer::EvolutionOptimizer
-  provider::AgentProvider
-  reaper::AgentReaper
-  mprof::Vector{AbstractMutation}
-  rprof::Vector{AbstractRecombination}
-  cprof::Vector{Constraint}
+  lifecycle::LifecycleManager
+  mutations::Vector{AbstractMutation}
+  recombinations::Vector{AbstractRecombination}
+  constraints::Vector{Constraint}
   goals::Dict{String,Function}
 end
 EvolutionProfile(;
-  optimizer = SimpleEnergyOptimizer(),
-  provider = BareProvider(),
-  reaper = SimpleReaper(),
-  mprof = AbstractMutation[],
-  rprof = AbstractRecombination[],
-  cprof = Constraint[],
+  optimizer = EnergyOptimizer(),
+  lifecycle = ProgrammableLifecycle(),
+  mutations = AbstractMutation[],
+  recombinations = AbstractRecombination[],
+  constraints = Constraint[],
   goals = Dict{String,Function}()) =
   EvolutionProfile(
     optimizer,
-    provider,
-    reaper,
-    mprof,
-    rprof,
-    cprof,
+    lifecycle,
+    mutations,
+    recombinations,
+    constraints,
     goals)
 
 """
@@ -89,25 +92,35 @@ mutable struct EvolutionState
   states::Dict{String,Dict{String,Dict}}
 end
 EvolutionState() =
-  EvolutionState(Dict{String,Agent}(), Dict{String,Dict{String,Float64}}(), Dict{String,Dict{String,Dict}}())
+  EvolutionState(
+    Dict{String,Agent}(),
+    Dict{String,Dict{String,Float64}}(),
+    Dict{String,Dict{String,Dict}}())
 
 ### Methods ###
 
 #= FIXME
 EvolutionProfile
   Various getters/setters
-EvolutionState
   optimize!
     seed!
     reap!
-AgentProvider
+LifecycleManager
   add_seed!
   generate_seed
-AgentReaper
-  reap!
+  reap_agent!
+Documentation!
 =#
 
-function add_agent!(estate::EvolutionState, name::String)
+add_goal!(func::Function, profile::EvolutionProfile, name::String) =
+  setindex!(profile.goals, func, name)
+del_goal!(profile::EvolutionProfile, name::String) =
+  delete!(profile.goals, name)
+add_seed!(profile::EvolutionProfile, agent::Agent, name::String=randstring()) =
+  add_seed!(profile.lifecycle, agent, name)
+del_seed!(profile::EvolutionProfile, name::String) =
+  del_seed!(profile.lifecycle, name)
+function add_agent!(estate::EvolutionState, agent::Agent, name::String)
   estate.agents[name] = agent
   estate.scores[name] = Dict{String,Float64}()
   estate.states[name] = Dict{String,Dict}()
@@ -117,108 +130,109 @@ function del_agent!(estate::EvolutionState, name::String)
   delete!(estate.scores, name)
   delete!(estate.states, name)
 end
+Base.length(estate) = length(estate.agents)
 function step!(estate::EvolutionState)
   for agent in values(estate.agents)
     run!(agent)
   end
 end
-score!(estate::EvolutionState, eprof::EvolutionProfile) =
-  score!(
-    estate.agents,
-    estate.states,
-    estate.scores,
-    eprof.goals)
-function score!(agents, states, scores, goals)
-  for (name,agent) in agents
+score!(estate::EvolutionState, eprof::EvolutionProfile) = score!(estate, eprof.goals)
+function score!(estate, goals)
+  for (name,agent) in estate.agents
     for (key,goal) in goals
-      scores[name][key] = goal(agent, states[key])
+      estate.scores[name][key] = goal(agent, get!(estate.states[name], key, Dict{String,Any}()))
     end
   end
 end
 optimize!(estate::EvolutionState, eprof::EvolutionProfile) =
   optimize!(
+    estate,
     eprof.optimizer,
-    eprof.provider,
-    eprof.reaper)
-function optimize!(optimizer, provider, reaper)
-  # FIXME: Call seed! and reap! as necessary
-end
+    eprof.lifecycle)
 function run!(estate::EvolutionState, eprof::EvolutionProfile)
   step!(estate)
   score!(estate, eprof)
   optimize!(estate, eprof)
 end
 
-### SimpleEnergyOptimizer Defaults ###
+### EnergyOptimizer Methods ###
 
-#add_seed!(opt::SimpleEnergyOptimizer, agent::Agent, name::String) =
-#  setindex!(opt.energies, opt.initialEnergy, name)
-#Base.delete!(opt::SimpleEnergyOptimizer, name::String) = Base.delete!(opt.energies, name)
-#=function compute_bounds(estate::EvolutionState{SimpleEnergyOptimizer})
+function _compute_bounds(estate::EvolutionState, optimizer::EnergyOptimizer)
   # Calculate current birth and death energies
-  carryFactor = exp(length(estate.agents) / estate.opt.capacity)-1
-  birthLower, birthUpper = estate.opt.birthBounds
+  carryFactor = exp(length(estate.agents) / optimizer.capacity)-1
+  birthLower, birthUpper = optimizer.birthBounds
   birthEnergy = carryFactor*(birthUpper-birthLower)+birthLower
-  deathLower, deathUpper = estate.opt.deathBounds
+  deathLower, deathUpper = optimizer.deathBounds
   deathEnergy = carryFactor*(deathUpper-deathLower)+deathLower
   return (carryFactor, birthEnergy, deathEnergy)
 end
-function lifecycle_phase!(;
-  agents::Dict{String,Agent},
-  factors::Dict{String,Function},
-  states::Dict{String,Dict{String,Any}},
-  scores::Dict{String,Dict{String,Real}},
-  mprof::MutationProfile,
-  rprof::RecombinationProfile,
-  cprof::ConstraintProfile)
-
-  # TODO: Use these to return added/deleted agent ids
-  added, deleted = String[], String[]
+function optimize!(estate, optimizer::EnergyOptimizer, lifecycle;
+  mutations = MutationProfile(),
+  recombinations = RecombinationProfile(),
+  constraints = ConstraintProfile())
   
-  carryFactor, birthEnergy, deathEnergy = compute_bounds(estate)
+  carryFactor, birthEnergy, deathEnergy = _compute_bounds(estate, optimizer)
 
   # Update energies based on scores
   for (name,scores) in estate.scores
-    estate.opt.energies[name] += sum(values(scores))
+    optimizer.energies[name] += sum(values(scores))
   end
 
   # Mark agents for creation or deletion
   created = Set{String}()
   destroyed = Set{String}()
-  for (name,energy) in estate.opt.energies
+  for (name,energy) in optimizer.energies
     if energy > birthEnergy
       push!(created, name)
-      estate.opt.energies[name] -= estate.opt.initialEnergy
+      optimizer.energies[name] -= optimizer.initialEnergy
     end
-    if energy < deathEnergy || rand() < estate.opt.accidentProb
+    if energy < deathEnergy || rand() < optimizer.accidentProb
       push!(destroyed, name)
     end
-    estate.opt.energies[name] *= (1 - estate.opt.energyDecay)
+    optimizer.energies[name] *= (1 - optimizer.energyDecay)
   end
+
+  # Create or destroy marked agents
   for name in created
-    child = mutate!(deepcopy(estate.agents[name]), estate.profile.mprofile)
+    child = mutate!(mutations, deepcopy(estate.agents[name]))
     clear!(child)
     child_name = randstring()
-    estate[child_name] = child
+    add_agent!(estate, child, child_name)
+    optimizer.energies[child_name] = optimizer.initialEnergy
   end
   for name in destroyed
-    delete!(estate, name)
+    del_agent!(estate, name)
+    delete!(optimizer.energies, name)
   end
 
   # Optionally create child as offspring of two agents, including seeds
   # TODO: Improve this significantly (make tunable, adjust based on carryFactor, etc.)
-  if rand() < 0.1
-    pool = vcat(collect(values(estate.agents)), collect(values(estate.seeds)))
-    parent1, parent2 = rand(pool), rand(pool)
-    child = recombine(estate.profile.rprofile, parent1, parent2)
-    mutate!(child, estate.profile.mprofile)
-    estate[randstring()] = child
-  end
+  #=if rand() < 0.1
+    parent1 = rand() < 0.5 ? rand(collect(values(estate.agents))) : generate_seed(lifecycle)
+    parent2 = rand() < 0.5 ? rand(collect(values(estate.agents))) : generate_seed(lifecycle)
+    child = recombine(recombination, parent1, parent2)
+    mutate!(mutations, child)
+    child_name = randstring()
+    add_agent!(estate, child, child_name)
+    optimizer.energies[child_name] = optimizer.initialEnergy
+  end=#
 
   # Clone from seeds if necessary
-  if length(estate.agents) == 0
+  if length(estate) == 0
     name = randstring()
-    agent = mutate!(deepcopy(rand(collect(values(estate.seeds)))), estate.profile.mprofile)
-    estate[name] = agent
+    agent = mutate!(mutations, generate_seed(lifecycle))
+    add_agent!(estate, agent, name)
+    optimizer.energies[name] = optimizer.initialEnergy
   end
-end=#
+end
+
+### ProgrammableLifecycle Methods ###
+
+add_seed!(lifecycle::ProgrammableLifecycle, agent::Agent, name::String) =
+  setindex!(lifecycle.agent_pool, agent, name)
+del_seed!(lifecycle::ProgrammableLifecycle, name::String) =
+  delete!(lifecycle.agent_pool, name)
+generate_seed(lifecycle::ProgrammableLifecycle) =
+  lifecycle.seed_func(lifecycle.agent_pool)
+reap_agent!(lifecycle::ProgrammableLifecycle, agent::Agent) =
+  lifecycle.reap_func(agent)

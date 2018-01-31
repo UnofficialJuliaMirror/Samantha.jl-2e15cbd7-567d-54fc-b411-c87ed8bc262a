@@ -8,6 +8,8 @@ struct Constraint{CI<:ConstraintIdentifier}
   restrictions::Vector{ConstraintRestriction}
 end
 
+const ConstraintProfile = Vector{Constraint}
+
 ### Constraint Identifiers ###
 
 struct NodeIDConstraint <: ConstraintIdentifier
