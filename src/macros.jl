@@ -41,18 +41,8 @@ macro nodegen(ex::Expr)
   # Re-generate type
   push!(final.args, ex)
 
-  #= Generates:
-    isnodegenerated
-    getindex/setindex!
-    params
-    TODO: bounds/defaultvalue
-    load/store!/sync!
-    TODO: show/showall
-  =#
   push!(final.args, esc(:(isnodegenerated(__data::$T) = true)))
   params = quote end
-  load = Expr(:call, T)
-  store = quote settype!(ldbl, $(length(TPN) > 0 ? Expr(:curly, T, TPN...) : T)) end
   sync = quote end
   for (name,typ) in map(f->(f.args...,), fields)
     push!(final.args, esc(quote
@@ -63,12 +53,6 @@ macro nodegen(ex::Expr)
     end))
     push!(params.args, :(
       __dict[$(QuoteNode(name))] = __data.$name
-    ))
-    push!(load.args, :(
-      load(ldbl, $("$name"), $typ)
-    ))
-    push!(store.args, :(
-      store!(ldbl, $("$name"), __data.$name)
     ))
     push!(sync.args, :(
       sync!(__data.$name)
@@ -85,18 +69,6 @@ macro nodegen(ex::Expr)
     $params
     return __dict
   end)))
-  ex1 = :(Samantha.load(pldbl::Loadable, name, ::Type{$(Expr(:curly, T, TPN...))}))
-  ex2 = :(Samantha.load(pldbl::Loadable, name, ::Type{$T}))
-  push!(final.args, Expr(:(=), length(TPN) > 0 ? Expr(:where, ex1, TP...) : ex2, quote
-    ldbl = getchild(pldbl, name)
-    $load
-  end))
-  ex1 = :(Samantha.store!(pldbl::Loadable, name, __data::$(Expr(:curly, T, TPN...))))
-  ex2 = :(Samantha.store!(pldbl::Loadable, name, __data::$T))
-  push!(final.args, Expr(:(=), length(TPN) > 0 ? Expr(:where, ex1, TP...) : ex2, quote
-    ldbl = setchild!(pldbl, name)
-    $store
-  end))
   push!(final.args, esc(:(function sync!(__data::$T)
     $sync
   end)))

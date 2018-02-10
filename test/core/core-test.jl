@@ -29,13 +29,6 @@
   @test length(agent.nodes) == 4
   delnode!(agent, agent["NT"])
 
-  # Store/Load
-  @test_skip "Load/Store"
-  #path = joinpath(SAMANTHA_DATA_PATH, "core-test.h5")
-  #storefile!(path, agent)
-  #agent = loadfile(path)
-  #run!(agent)
-
   # Merge
   agent2 = Agent()
   n3 = GenericNeurons(16)

@@ -1,5 +1,5 @@
 export Agent
-export load, store!, sync!, addnode!, delnode!, addedge!, deledge!, merge, merge!, barrier
+export sync!, addnode!, delnode!, addedge!, deledge!, merge, merge!, barrier
 export clone, mutate!
 export activate!, deactivate!
 export relocate!, store!, sync!, addnode!, delnode!, addedge!, deledge!, merge, merge!, barrier
@@ -12,8 +12,6 @@ mutable struct AgentRunTable
   lock::Threads.TatasLock
 end
 AgentRunTable() = AgentRunTable(Dict{Int,Vector{String}}([(idx, String[]) for idx in 1:Threads.nthreads()]), Dict{String,Bool}(), Threads.TatasLock())
-load(ldbl::Loadable, name::String, ::Type{AgentRunTable}) = AgentRunTable()
-store!(ldbl::Loadable, name::String, data::AgentRunTable) = ()
 
 @nodegen mutable struct Agent
   nodes::Dict{String, AbstractContainer}
