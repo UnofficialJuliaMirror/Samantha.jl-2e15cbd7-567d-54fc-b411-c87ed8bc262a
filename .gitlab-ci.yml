@@ -1,4 +1,4 @@
-image: samantha.ai/samantha.jl/julia:0.7-dev
+image: registry.gitlab.com/samantha.ai/samantha.jl/julia:0.7-dev
 
 default:
   script: 
