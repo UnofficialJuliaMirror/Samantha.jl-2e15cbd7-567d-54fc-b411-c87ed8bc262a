@@ -1,8 +1,8 @@
-image: julia:0.6
+image: samantha.ai/samantha.jl/julia:0.7-dev
 
 default:
   script: 
     - apt-get -y update
     - apt-get -y upgrade
-    - apt-get -y install libhdf5-8 make gcc
-    - julia -e "Pkg.update();Pkg.clone(\"https://gitlab.com/Samantha.ai/Samantha.jl\");Pkg.checkout(\"Samantha\", \"\$(ENV[\"CI_COMMIT_REF_NAME\"])\");Pkg.test(\"Samantha\")"
+    - apt-get -y install make gcc
+    - /opt/julia/julia -e "Pkg.update();Pkg.clone(\"https://gitlab.com/Samantha.ai/Samantha.jl\");Pkg.checkout(\"Samantha\", \"\$(ENV[\"CI_COMMIT_REF_NAME\"])\");Pkg.test(\"Samantha\")"
