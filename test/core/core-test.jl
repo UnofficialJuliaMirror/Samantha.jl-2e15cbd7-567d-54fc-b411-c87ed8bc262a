@@ -43,7 +43,7 @@
   run!(agent)
   
   # Clear
-  clear!(agent)
+  Samantha.clear!(agent)
 
   # Deepcopy
   agent2 = deepcopy(agent)

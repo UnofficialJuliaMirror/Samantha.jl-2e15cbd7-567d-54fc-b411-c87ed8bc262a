@@ -14,7 +14,7 @@ Spiking neural network engine written in Julia, which is primarily aimed at crea
 * Efficient usage of high-performance network fabrics  
 
 ## Installation
-Install a supported version of Julia (currently 0.7-DEV or greater) on a supported OS.  
+Install a supported version of Julia (currently 0.6 or greater) on a supported OS.  
 ```
 Pkg.clone("https://gitlab.com/Samantha.ai/Samantha.jl")
 ```
@@ -27,7 +27,8 @@ Samantha is designed to work primarily on GNU/Linux systems, but is also aimed a
 It is strongly recommended to use a recent Linux kernel, simply due to the rapid pace of performance and stability improvements (especially when using GPUs, NVMe SSDs, or other fancy new hardware).  
 
 ### Required Packages:
-* MacroTools - For ensuring a consistent API and easing package development
+* Compat - For compatibility with older versions of Julia  
+* MacroTools - For ensuring a consistent API and easing package development  
 * Requires - For inclusion of additional code to support optional packages  
 
 ### Optional Packages:

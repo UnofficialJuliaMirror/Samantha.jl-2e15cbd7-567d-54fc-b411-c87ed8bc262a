@@ -8,7 +8,11 @@ for arg in ARGS
   end
 end
 
-using Test
+using Compat
+using Compat.Test
+import Compat.@info
+import Compat.@warn
+import Compat.axes
 
 # Setup global configuration
 const SAMANTHA_TMP_HOME = mktempdir()

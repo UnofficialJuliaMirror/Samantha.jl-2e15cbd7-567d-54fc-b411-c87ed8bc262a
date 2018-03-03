@@ -1,4 +1,7 @@
-using Random
+using Compat
+import Compat.Random
+import Compat.@info
+import Compat.axes
 
 SAMANTHA_THREADS = haskey(ENV, "SAMANTHA_THREADS")
 
