@@ -1,11 +1,11 @@
 ### Methods ###
 
 function eforward!(synapses::CPUContainer{S}, args#=::Vector{Tuple{Symbol,AbstractContainer}}=#) where S<:AbstractSynapses
-  inputs = map(t->t[2], filter(t->t[1]==:input, args))
+  inputs = map(t->t[2], filter(t->t[1]==:input, collect(args)))
   @assert length(inputs) == 1 "Incorrect number of inputs: $(length(inputs))"
   input = inputs[1]
 
-  outputs = map(t->t[2], filter(t->t[1]==:output, args))
+  outputs = map(t->t[2], filter(t->t[1]==:output, collect(args)))
   @assert length(outputs) == 1 "Incorrect number of outputs: $(length(outputs))"
   output = outputs[1]
 
