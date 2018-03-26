@@ -17,7 +17,7 @@ ZeroArray(T::Type, size::NTuple{N,Int}) where N = ZeroArray{T,N}(size)
 ZeroArray(arr::DenseArray{T,N}) where {T,N} = ZeroArray{T,N}(size(arr))
 
 mutable struct RingBuffer{T}
-  buf::AbstractArray{T,2}
+  buf::Matrix{T}
   pos::Int
 end
 RingBuffer(T, width, length) = RingBuffer(zeros(T, width, length), 1)

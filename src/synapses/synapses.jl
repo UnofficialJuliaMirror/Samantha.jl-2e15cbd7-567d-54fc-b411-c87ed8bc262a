@@ -1,6 +1,6 @@
 ### Methods ###
 
-function eforward!(synapses::CPUContainer{S}, args::Vector{Tuple{Symbol,AbstractContainer}}) where S<:AbstractSynapses
+function eforward!(synapses::CPUContainer{S}, args#=::Vector{Tuple{Symbol,AbstractContainer}}=#) where S<:AbstractSynapses
   inputs = map(t->t[2], filter(t->t[1]==:input, args))
   @assert length(inputs) == 1 "Incorrect number of inputs: $(length(inputs))"
   input = inputs[1]
