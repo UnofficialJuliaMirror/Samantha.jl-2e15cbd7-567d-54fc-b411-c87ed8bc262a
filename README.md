@@ -6,7 +6,6 @@ Spiking neural network engine written in Julia, which is primarily aimed at crea
 
 ## Goals
 * High-performance spiking neural network core  
-* Adaptive agent evolution system  
 * Stable real-time operation and interactivity  
 * Flexible choice of various algorithms and parameters  
 * Persistence of data at the filesystem level via file mmap  
@@ -20,14 +19,8 @@ Pkg.clone("https://gitlab.com/Samantha.ai/Samantha.jl")
 ```
 
 ## Dependencies
-### Operating System and Kernel
-Samantha is designed to work primarily on GNU/Linux systems, but is also aimed at supporting any reasonable OS/Kernel combination that Julia supports. Support for proprietary systems (OS X, Windows, etc.) is not a top priority, but will likely work regardless thanks to Julia's cross-platform nature.  
-
-#### GNU/Linux
-It is strongly recommended to use a recent Linux kernel, simply due to the rapid pace of performance and stability improvements (especially when using GPUs, NVMe SSDs, or other fancy new hardware).  
-
 ### Required Packages:
-* Compat - For compatibility with older versions of Julia  
+* Compat - For compatibility with older versions of Julia (0.6 and above)  
 * MacroTools - For ensuring a consistent API and easing package development  
 * Requires - For inclusion of additional code to support optional packages  
 
@@ -42,10 +35,6 @@ TODO.md - General Todo list
 src/ - Source code  
 src/stdlib/ - Standard Library  
 test/ - Tests, tests, tests!  
-test/tmp/ - Temporary test files  
-test/tmp/data - Temporary data files  
-test/tmp/log - Temporary log files  
-test/tmp/run - Temporary run files  
 
 ## Contributing Guidelines
 All reasonable issues and code submissions will be given a fair chance, but duplicates may be immediately rejected. Please use the issue/PR search features to see if someone else has already made a similar submission.  

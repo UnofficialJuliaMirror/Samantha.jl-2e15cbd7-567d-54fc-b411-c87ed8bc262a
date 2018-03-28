@@ -14,10 +14,6 @@ include("neurons/neurons.jl")
 include("synapses/synapses.jl")
 include("agent.jl")
 include("interface.jl")
-include("mutate.jl")
-include("recombine.jl")
-include("constrain.jl")
-include("evolve.jl")
 
 # Standard Library
 include("Stdlib.jl")
