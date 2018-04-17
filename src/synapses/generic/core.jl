@@ -11,6 +11,9 @@ export GenericConfig, GenericState, GenericSynapses
   #ID::Vector{Int}
 end
 GenericFrontend(inputSize::Int, delayLength::Int) = GenericFrontend(delayLength, RingBuffer(Bool, inputSize, delayLength))
+@nodegen mutable struct RewardModulator
+end
+#RewardModulator
 @nodegen mutable struct GenericSynapses{F, L, S} <: AbstractSynapses
   inputSize::Int
   outputSize::Int
@@ -25,6 +28,8 @@ GenericFrontend(inputSize::Int, delayLength::Int) = GenericFrontend(delayLength,
   W::Array{Float32,S}
   M::Array{Bool,S}
   T::Array{Float32,S}
+
+  modulators::Vector{Tuple{String,RewardModulator}}
 end
 GenericSynapses(inputSize::Int, outputSize::Int; outputMask=1, condRate=0.1, traceRate=0.5, delayLength=1, learn=SymmetricRuleLearn()) =
   GenericSynapses(
@@ -40,7 +45,9 @@ GenericSynapses(inputSize::Int, outputSize::Int; outputMask=1, condRate=0.1, tra
     zeros(Float32, outputSize, inputSize),
     rand(Float32, outputSize, inputSize) * 0.3f0,
     ones(Bool, outputSize, inputSize),
-    zeros(Float32, outputSize, inputSize)
+    zeros(Float32, outputSize, inputSize),
+
+    Tuple{String,RewardModulator}[]
   )
 GenericSynapses(size::Tuple{Int,Int}; kwargs...) = GenericSynapses(size[1], size[2]; kwargs...)
 
@@ -51,6 +58,17 @@ GenericSynapses(size::Tuple{Int,Int}; kwargs...) = GenericSynapses(size[1], size
 
 ### Methods ###
 
+function addedge!(synapses::GenericSynapses, dstcont, dst, op)
+  @assert op in [:input, :output, :reward] "Cannot handle op $op"
+  if op == :reward
+    push!(synapses.modulators, (dst, RewardModulator()))
+  end
+end
+function deledge!(synapses::GenericSynapses, dst, op)
+  if op == :reward
+    synapses.modulators = filter(m->m[1]==dst, synapses.modulators)
+  end
+end
 function resize!(synapses::GenericSynapses, new_size)
   old_size = size(synapses)
   synapses.inputSize = new_size[1]
@@ -80,7 +98,7 @@ function frontend!(gf::GenericFrontend, I)
 end
 
 # TODO: Specify input and output types
-function _eforward!(scont::CPUContainer{S}, input, output) where S<:GenericSynapses
+function _eforward!(scont::CPUContainer{S}, input, output, rewards=nothing) where S<:GenericSynapses
   gs = root(scont)
   condRate, traceRate = gs.condRate, gs.traceRate
   C, W, M, T = gs.C, gs.W, gs.M, gs.T

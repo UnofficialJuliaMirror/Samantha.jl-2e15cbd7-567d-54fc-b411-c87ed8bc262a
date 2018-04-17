@@ -1,3 +1,8 @@
+addedge!(srccont::C, dstcont, dst, op) where C<:AbstractContainer =
+  addedge!(root(srccont), dstcont, dst, op)
+deledge!(srccont::C, dst, op) where C<:AbstractContainer =
+  deledge!(root(srccont), dst, op)
+
 nupdate!(cont::CPUContainer{C}) where C<:AbstractNode = nupdate!(transient(cont))
 nupdate!(x::Any) = ()
 

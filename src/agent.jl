@@ -25,7 +25,10 @@ function delnode!(agent::Agent, id::String)
 end
 
 # Adds an edge connection from a source node to a target node with a specified operation
-addedge!(agent::Agent, src::String, dst::String, op::Symbol) = push!(agent.edges, (src, dst, op))
+function addedge!(agent::Agent, src::String, dst::String, op::Symbol)
+  addedge!(agent.nodes[src], agent.nodes[dst], dst, op)
+  push!(agent.edges, (src, dst, op))
+end
 function addedge!(agent::Agent, src::String, pairs::Tuple)
   for pair in pairs
     addedge!(agent, src, pair[1], pair[2])
@@ -38,7 +41,9 @@ function deledge!(agent::Agent, src::String, dst::String, op::Symbol)
   @assert length(edges) != 0 "No such edge found with src: $src, dst: $dst, op: $op"
   @assert length(edges) < 2 "Multiple matching edges returned"
   deleteat!(agent.edges, edges[1])
+  deledge!(agent.nodes[src], dst, op)
 end
+deledge!(agent::Agent, edge::Tuple{String,String,Symbol}) = delete!(agent.edges, edge)
 
 # Returns the union of two agents
 function merge(agent1::Agent, agent2::Agent)
@@ -96,14 +101,14 @@ end
 function run_edges!(agent::Agent)
   # Construct edge sets
   # TODO: Support multiple nodes with the same op
-  edges = Dict{String, Vector{Tuple{Symbol,AbstractContainer}}}()
+  edges = Dict{String, Vector{Tuple{Symbol,String,AbstractContainer}}}()
   for edgeObj in agent.edges
     name = edgeObj[1]
-    entry = (edgeObj[3], agent.nodes[edgeObj[2]])
+    entry = (edgeObj[3], edgeObj[2], agent.nodes[edgeObj[2]])
     if haskey(edges, name)
       push!(edges[name], entry)
     else
-      edges[name] = Tuple{Symbol,AbstractContainer}[entry]
+      edges[name] = Tuple{Symbol,String,AbstractContainer}[entry]
     end
   end
   
