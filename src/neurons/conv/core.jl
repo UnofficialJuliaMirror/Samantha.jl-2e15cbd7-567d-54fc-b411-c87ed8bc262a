@@ -31,7 +31,7 @@ ConvNeurons(size::Tuple{Int,Int,Int}; a=0.02, b=0.2, c=-65, d=8, thresh=30, θRa
 ### Methods ###
 
 function Base.show(io::IO, neurons::ConvNeurons)
-  println(io, "ConvNeurons $(neurons.conf.size)")
+  print(io, "ConvNeurons $(neurons.conf.size)")
 end
 # TODO: Make this actually random?
 function randnode(::Type{ConvNeurons}, size::Tuple{Int,Int,Int}=(rand(1:20,3)...,))

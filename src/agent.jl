@@ -77,9 +77,7 @@ end
 # Prints a short representation of the agent
 # TODO: Use colors if enabled
 function Base.show(io::IO, agent::Agent)
-  println(io, "Agent:")
-  println(io, "  $(length(agent.nodes)) nodes")
-  println(io, "  $(length(agent.edges)) edges")
+  print(io, "Agent($(length(agent.nodes)) nodes, $(length(agent.edges)) edges)")
 end
 
 # Prints a long representation of the agent

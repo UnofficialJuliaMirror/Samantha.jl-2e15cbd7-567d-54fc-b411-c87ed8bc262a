@@ -43,7 +43,7 @@ function clear!(neurons::Neurons)
   fill!(neurons.state.θ, 0f0)
 end
 function Base.show(io::IO, neurons::Neurons)
-  println(io, "Neurons ($(neurons.conf.size))")
+  print(io, "Neurons ($(neurons.conf.size))")
 end
 
 Base.size(neurons::Neurons) = neurons.conf.size

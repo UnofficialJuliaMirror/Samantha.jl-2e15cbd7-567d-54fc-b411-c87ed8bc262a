@@ -33,6 +33,7 @@ ConvSynapses(size::Tuple{Tuple{Int,Int,Int}, Int, Int, Int}; kwargs...) =
 function clear!(synapses::ConvSynapses)
   rand!(synapses.W, 0f0:0.01f0:0.3f0)
 end
+# TODO: Make one-liner
 function Base.show(io::IO, synapses::ConvSynapses)
   outputSize = output_size(synapses)
   println(io, "ConvSynapses ($(synapses.inputSize) => $(outputSize))")

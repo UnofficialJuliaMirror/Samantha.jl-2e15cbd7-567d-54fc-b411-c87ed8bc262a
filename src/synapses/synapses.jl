@@ -1,6 +1,6 @@
 ### Methods ###
 
-function eforward!(synapses::CPUContainer{S}, args#=::Vector{Tuple{Symbol,AbstractContainer}}=#) where S<:AbstractSynapses
+function eforward!(synapses::CPUContainer{S}, args) where S<:AbstractSynapses
   dstnodes = collect(args)
 
   inputs = map(t->t[3], filter(t->t[1]==:input, dstnodes))

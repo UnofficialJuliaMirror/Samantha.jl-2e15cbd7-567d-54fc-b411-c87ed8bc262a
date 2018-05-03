@@ -12,8 +12,9 @@ export GenericConfig, GenericState, GenericSynapses
 end
 GenericFrontend(inputSize::Int, delayLength::Int) = GenericFrontend(delayLength, RingBuffer(Bool, inputSize, delayLength))
 @nodegen mutable struct RewardModulator
+  avgReward::Mean
 end
-#RewardModulator
+RewardModulator() = RewardModulator(Mean(weight=ExponentialWeight()))
 @nodegen mutable struct GenericSynapses{F, L, S} <: AbstractSynapses
   inputSize::Int
   outputSize::Int
@@ -61,6 +62,7 @@ GenericSynapses(size::Tuple{Int,Int}; kwargs...) = GenericSynapses(size[1], size
 function addedge!(synapses::GenericSynapses, dstcont, dst, op)
   @assert op in [:input, :output, :reward] "Cannot handle op $op"
   if op == :reward
+    @assert root(dstcont) isa GenericNeurons
     push!(synapses.modulators, (dst, RewardModulator()))
   end
 end
@@ -86,7 +88,7 @@ function clear!(synapses::GenericSynapses)
 end
 clear!(frontend::GenericFrontend) = clear!(frontend.D)
 function Base.show(io::IO, synapses::GenericSynapses)
-  println(io, "GenericSynapses ($(synapses.inputSize) => $(synapses.outputSize))")
+  print(io, "GenericSynapses ($(synapses.inputSize) => $(synapses.outputSize))")
 end
 Base.size(synapses::GenericSynapses) = (synapses.outputSize, synapses.inputSize)
 function frontend!(gf::GenericFrontend, I)
@@ -97,12 +99,12 @@ function frontend!(gf::GenericFrontend, I)
   return I_
 end
 
-# TODO: Specify input and output types
 function _eforward!(scont::CPUContainer{S}, input, output, rewards=nothing) where S<:GenericSynapses
   gs = root(scont)
   condRate, traceRate = gs.condRate, gs.traceRate
   C, W, M, T = gs.C, gs.W, gs.M, gs.T
 
+  # FIXME: Use dispatch to get these values
   I = transient(input).state.F  #@param input[F]
   G = transient(output).state.T #@param output[G]
   F = transient(output).state.F #@param output[F]
@@ -113,6 +115,22 @@ function _eforward!(scont::CPUContainer{S}, input, output, rewards=nothing) wher
 
   # Shift inputs through frontend
   I_ = frontend!(gs.frontend, I)
+
+  # Modify learn rate based on rewards
+  if rewards != nothing
+    learnRate = fit!(Mean(), 1)
+    for reward in rewards
+      mod = gs.modulators[findfirst(m->m[1]==reward[1], gs.modulators)]
+      node = transient(reward[2])
+      rF = node.state.F
+      rw = mean(rF)
+      fit!(learnRate, rw-value(mod.avgReward))
+      fit!(mod.avgReward, rw)
+    end
+    learnRate = value(learnRate)
+  else
+    learnRate = 1.0
+  end
 
   # Article: Unsupervised learning of digit recognition using spike-timing-dependent plasticity
   # Authors: Peter U. Diehl and Matthew Cook
@@ -126,7 +144,8 @@ function _eforward!(scont::CPUContainer{S}, input, output, rewards=nothing) wher
       T[n,i] += I_[i] + (traceRate * -T[n,i] * !I_[i])
 
       # Learn weights
-      W[n,i] += learn!(gs.learn, I_[i], G[n], F[n], W[n,i])
+      # FIXME: Use traces!
+      W[n,i] += learnRate * learn!(gs.learn, I_[i], G[n], F[n], W[n,i])
     end
   end
 
