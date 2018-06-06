@@ -18,8 +18,5 @@ Install a supported version of Julia (currently 0.6 or greater) on a supported O
 Pkg.clone("https://gitlab.com/Samantha.ai/Samantha.jl")
 ```
 
-## Optional Packages
-* Distributions - For richer choices of mutation probability distributions  
-
 ## License
 Samantha is licensed under the MIT "Expat" license. Please see LICENSE.md for the full license terms.

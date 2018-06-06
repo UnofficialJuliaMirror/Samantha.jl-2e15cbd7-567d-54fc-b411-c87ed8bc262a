@@ -23,6 +23,12 @@ PowerLawLearn() = PowerLawLearn(0.1, 0.5, 5, 1)
   β::Float32
 end
 ExpWeightDepLearn() = ExpWeightDepLearn(0.1, 0.5, 5, 1, 1)
+@nodegen mutable struct BCMLearn
+  α::Float32
+  ϵ::Float32
+  θM::Matrix{Float32}
+  # FIXME: Histories
+end
 
 #= TODO
   ## Old algorithms
@@ -48,4 +54,8 @@ end
 @inline function learn!(lrn::ExpWeightDepLearn, I, G, F, W)
   α, xtar, Wmax, μ, β = lrn.α, lrn.xtar, lrn.Wmax, lrn.μ, lrn.β
   return α * F * ((G * exp(-β * W)) - (xtar * exp(-β * (Wmax - W))))
+end
+@inline function learn!(lrn::BCMLearn, I, G, F, W)
+  α, ϵ, θM = lrn.α, lrn.ϵ, lrn.θM
+  # FIXME
 end
