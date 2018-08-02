@@ -4,7 +4,7 @@ import Base: size, setindex!, getindex, broadcast!, Broadcast.fill!, Broadcast.f
 
 ### Exports ###
 
-export ZeroArray, RingBuffer
+export ZeroArray, RingBuffer, AnyNode
 export fasttanh, canthread
 
 ### Types ###
@@ -23,6 +23,10 @@ end
 RingBuffer(T, width, length) = RingBuffer(zeros(T, width, length), 1)
 
 # TODO: LockedArray for locking individual arrays
+
+mutable struct AnyNode{T} <: AbstractNode
+  item::T
+end
 
 ### Methods ###
 
@@ -52,11 +56,25 @@ function _rbindex(rb::RingBuffer, idx)
   end
   npos
 end
-Base.getindex(rb::RingBuffer, idx) = getindex(rb.buf, idx, rb.pos)
-Base.getindex(rb::RingBuffer, idx1, idx2::Int) = getindex(rb.buf, idx1, _rbindex(rb, idx2))
-Base.setindex!(rb::RingBuffer, value, idx) = setindex!(rb.buf, value, idx, rb.pos)
-Base.setindex!(rb::RingBuffer, value, idx1, idx2::Int) = setindex!(rb.buf, value, idx1, _rbindex(rb, idx2))
-Base.endof(rb::RingBuffer) = rb.buf[end,rb.pos]
+Base.getindex(rb::RingBuffer, idx::Int) = getindex(rb.buf, Colon(), _rbindex(rb, idx))
+Base.getindex(rb::RingBuffer, ::Colon) = getindex(rb.buf, Colon(), rb.pos)
+function Base.getindex(rb::RingBuffer{T}, idx::Vector{Int}) where T
+  @assert length(idx) == size(rb.buf, 1) "Invalid RingBuffer indexing vector size: $(length(idx))"
+  result = zeros(T, size(rb.buf, 1))
+  for i in axes(rb.buf, 1)
+    result[i] = rb.buf[i, _rbindex(rb, idx[i])]
+  end
+  result
+end
+Base.setindex!(rb::RingBuffer, value, idx::Int) = (rb.buf[:, _rbindex(rb, idx)] .= value)
+Base.setindex!(rb::RingBuffer, value, ::Colon) = (rb.buf[:, rb.pos] .= value)
+function Base.setindex!(rb::RingBuffer{T}, value::Vector{T}, idx::Vector{Int}) where T
+  @assert length(idx) == size(rb.buf, 1) "Invalid RingBuffer indexing vector size: $(length(idx))"
+  for i in axes(rb.buf, 1)
+    rb.buf[i, _rbindex(rb, idx[i])] = value[i]
+  end
+end
+Base.lastindex(rb::RingBuffer) = size(rb.buf, 2)
 clear!(rb::RingBuffer{T}) where T = fill!(rb.buf, zero(T))
 
 

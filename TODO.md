@@ -1,7 +1,6 @@
 # Todo List
 
 ## General
-* Update Syntax for Julia 0.7/1.0  
 * Automatic Container Transfers  
 * GPUArrays Integration  
 * MPI Integration  

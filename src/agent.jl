@@ -5,45 +5,52 @@ export relocate!, store!, sync!, addnode!, delnode!, addedge!, deledge!, merge, 
 export run_edges!, run_nodes!, run!
 
 @nodegen mutable struct Agent
-  nodes::Dict{String, AbstractContainer}
-  edges::Vector{Tuple{String, String, Symbol}}
+  nodes::Dict{UUID, AbstractContainer}
+  edges::Vector{Tuple{UUID, UUID, Symbol}}
 end
-Agent() = Agent(Dict{String,AbstractContainer}(), Tuple{String,String,Symbol}[])
+Agent() = Agent(Dict{UUID,AbstractContainer}(), Tuple{UUID,UUID,Symbol}[])
+
+# Gets/sets a node
+getindex(agent::Agent, uuid::UUID) = agent.nodes[uuid]
+getindex(agent::Agent, uuid::AbstractString) = agent[UUID(uuid)]
+# FIXME: Container stuff
+#setindex!(agent::Agent, node, uuid::UUID) = agent.nodes[uuid] = node
+#setindex!(agent::Agent, node, uuid::AbstractString) = agent[UUID(uuid)] = node
 
 # Adds a node
 function addnode!(agent::Agent, node::AbstractNode)
-  id = randstring(16)
+  id = uuid4()
   agent.nodes[id] = CPUContainer(node)
   return id
 end
 
 # Deletes a node
 # TODO: Delete associated edges
-function delnode!(agent::Agent, id::String)
+function delnode!(agent::Agent, id::UUID)
   node = agent.nodes[id]
   Base.delete!(agent.nodes, id)
 end
 
 # Adds an edge connection from a source node to a target node with a specified operation
-function addedge!(agent::Agent, src::String, dst::String, op::Symbol)
+function addedge!(agent::Agent, src::UUID, dst::UUID, op::Symbol)
   addedge!(agent.nodes[src], agent.nodes[dst], dst, op)
   push!(agent.edges, (src, dst, op))
 end
-function addedge!(agent::Agent, src::String, pairs::Tuple)
+function addedge!(agent::Agent, src::UUID, pairs::Tuple)
   for pair in pairs
     addedge!(agent, src, pair[1], pair[2])
   end
 end
 
 # Deletes an edge
-function deledge!(agent::Agent, src::String, dst::String, op::Symbol)
+function deledge!(agent::Agent, src::UUID, dst::UUID, op::Symbol)
   edges = findall(edge->(edge[1]==src&&edge[2]==dst&&edge[3]==op), agent.edges)
   @assert length(edges) != 0 "No such edge found with src: $src, dst: $dst, op: $op"
   @assert length(edges) < 2 "Multiple matching edges returned"
   deleteat!(agent.edges, edges[1])
   deledge!(agent.nodes[src], dst, op)
 end
-deledge!(agent::Agent, edge::Tuple{String,String,Symbol}) = delete!(agent.edges, edge)
+deledge!(agent::Agent, edge::Tuple{UUID,UUID,Symbol}) = delete!(agent.edges, edge)
 
 # Returns the union of two agents
 function merge(agent1::Agent, agent2::Agent)
@@ -99,14 +106,14 @@ end
 function run_edges!(agent::Agent)
   # Construct edge sets
   # TODO: Support multiple nodes with the same op
-  edges = Dict{String, Vector{Tuple{Symbol,String,AbstractContainer}}}()
+  edges = Dict{UUID, Vector{Tuple{Symbol,UUID,AbstractContainer}}}()
   for edgeObj in agent.edges
     name = edgeObj[1]
     entry = (edgeObj[3], edgeObj[2], agent.nodes[edgeObj[2]])
     if haskey(edges, name)
       push!(edges[name], entry)
     else
-      edges[name] = Tuple{Symbol,String,AbstractContainer}[entry]
+      edges[name] = Tuple{Symbol,UUID,AbstractContainer}[entry]
     end
   end
   
