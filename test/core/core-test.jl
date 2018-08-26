@@ -3,7 +3,7 @@
   n1 = addnode!(agent, GenericNeurons(8))
   @test length(agent.nodes) == 1
   n2 = addnode!(agent, GenericNeurons(8))
-  s1 = addnode!(agent, GenericSynapses(8, 8))
+  s1 = addnode!(agent, GenericSynapses(8))
   addedge!(agent, s1, (
     (n1, :input),
     (n2, :output)
@@ -12,7 +12,7 @@
   run!(agent)
 
   nt = addnode!(agent, GenericNeurons(8))
-  st = addnode!(agent, GenericSynapses(8, 8))
+  st = addnode!(agent, GenericSynapses(8))
   addedge!(agent, st, (
     (n1, :input),
     (nt, :output)
@@ -28,7 +28,7 @@
   agent2 = Agent()
   n3 = addnode!(agent2, GenericNeurons(16))
   merge!(agent, agent2)
-  s2 = addnode!(agent, GenericSynapses(8, 16))
+  s2 = addnode!(agent, GenericSynapses(16))
   addedge!(agent, s2, (
     (n1, :input),
     (n3, :output)
@@ -36,7 +36,7 @@
   run!(agent)
   
   # Clear
-  Samantha.clear!(agent)
+  reinit!(agent)
 
   # Deepcopy
   agent2 = deepcopy(agent)

@@ -4,7 +4,7 @@ mutable struct SynapticConnection{D}
   data::D
 end
 
-@with_kw mutable struct SynapticInput{Frontend,LearnAlg,NDims,Mod}
+@with_kw mutable struct SynapticInput{Frontend,LearnAlg,NDims}
   inputSize::Int
   outputSize::Int
 
@@ -19,24 +19,38 @@ end
   M::Array{Bool,NDims} = ones(Bool, outputSize, inputSize)
   T::Array{Float32,NDims} = zeros(Float32, outputSize, inputSize)
   O::Vector{Float32} = zeros(Float32, outputSize)
-
-  modulator::Mod = nothing
+end
+# FIXME: Apply conf
+function SynapticInput(ncont::CPUContainer{N} where N<:GenericNeurons, outputSize, conf)
+  n = root(ncont)
+  SynapticInput(;inputSize=size(n), outputSize=outputSize)
 end
 
-mutable struct SynapticOutput
-  outputMask::Float32
+@with_kw mutable struct SynapticOutput
+  outputMask::Float32=1.0
+end
+# FIXME: Apply conf
+function SynapticOutput(ncont::CPUContainer{N} where N<:GenericNeurons, conf)
+  n = root(ncont)
+  SynapticOutput()
 end
 
-# FIXME
-struct FunctionModulator end
-struct RewardModulator end
+@with_kw mutable struct RewardModulator{Frontend,LearnAlg,NDims}
+  inputSize::Int
+  outputSize::Int
+  inputIndex::Int
 
+  frontend::Frontend = GenericFrontend(inputSize, 1)
+end
+
+#=
 modulate!(state, node, mod::Nothing) = state
 @with_kw mutable struct FunctionalModulator{OF<:Function,IF}
   outer::OF
   inner::IF = nothing
 end
-modulate!(state, node, mod::FunctionModulator) = mod.func(modulate!(state, node, mod.inner), node)
+modulate!(state, node, mod::FunctionalModulator) = mod.func(modulate!(state, node, mod.inner), node)
+=#
 
 #@with_kw mutable struct RewardModulator
 #  avgReward::Mean = RewardModulator(Mean(weight=ExponentialWeight()))
@@ -50,6 +64,15 @@ function modulate!(state, node::GenericNeurons, mod::RewardModulator)
 end
 
 ### Methods ###
+
+function reinit!(conn::C where C<:SynapticInput)
+  @unpack frontend, C, W, T = conn
+  reinit!(frontend)
+  fill!(C, 0f0)
+  rand!(W, 0f0:0.01f0:1f0)
+  fill!(T, 0f0)
+end
+reinit!(conn::C where C<:SynapticOutput) = nothing
 
 eforward!(synapses::CPUContainer{S}, args) where S<:AbstractSynapses =
   _eforward!(synapses, args)

@@ -13,6 +13,7 @@ using Compat.Test
 import Compat.@info
 import Compat.@warn
 import Compat.axes
+using Random
 
 # Setup global configuration
 const SAMANTHA_TMP_HOME = mktempdir()
@@ -34,7 +35,10 @@ try
 
   @info "Tests Finished"
 catch err
-  try rm(SAMANTHA_TMP_HOME, true, true) end
+  try
+    rm(SAMANTHA_TMP_HOME, true, true)
+  finally
+  end
   @warn "Error encountered"
   rethrow(err)
 end

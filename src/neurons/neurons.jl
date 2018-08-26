@@ -34,7 +34,7 @@ NCPUCont{C,S} = CPUContainer{Neurons{C,S}}
 
 ### Methods ###
 
-function clear!(neurons::Neurons)
+function reinit!(neurons::Neurons)
   fill!(neurons.state.V, neurons.conf.c)
   fill!(neurons.state.U, 0f0)
   fill!(neurons.state.I, 0f0)

@@ -14,8 +14,10 @@ GenericFrontend(inputSize::Int, delayLength::Int, delayIndices=(delayLength-1)*o
   GenericFrontend(delayLength, RingBuffer(Bool, inputSize, delayLength), delayIndices)
 
 @with_kw mutable struct GenericSynapses <: AbstractSynapses
+  outputSize::Int
   conns::Vector{SynapticConnection} = SynapticConnection[]
 end
+GenericSynapses(outputSize) = GenericSynapses(outputSize=outputSize)
 
 ### Edge Patterns ###
 
@@ -26,9 +28,11 @@ end
 
 function addedge!(synapses::GenericSynapses, dstcont, dst, op, conf)
   @assert root(dstcont) isa GenericNeurons
+  outputSize = synapses.outputSize
   if op == :input
-    data = SynapticInput(dstcont, conf)
+    data = SynapticInput(dstcont, outputSize, conf)
   elseif op == :output
+    # FIXME: Only allow a single output
     data = SynapticOutput(dstcont, conf)
   else
     error("GenericSynapses cannot handle op: $op")
@@ -36,7 +40,7 @@ function addedge!(synapses::GenericSynapses, dstcont, dst, op, conf)
   push!(synapses.conns, SynapticConnection(dst, op, data))
 end
 deledge!(synapses::GenericSynapses, dst, op) =
-  filter!(conn->conn.src==dst, synapses.conns)
+  filter!(conn->conn.uuid==dst, synapses.conns)
 function resize!(synapses::GenericSynapses, new_size)
   old_size = size(synapses)
   synapses.inputSize = new_size[1]
@@ -46,17 +50,14 @@ function resize!(synapses::GenericSynapses, new_size)
   synapses.M = resize_arr(synapses.M, new_size)
   synapses.T = resize_arr(synapses.T, new_size)
 end
-function clear!(synapses::GenericSynapses)
-  clear!(synapses.frontend)
-  fill!(synapses.C, 0f0)
-  rand!(synapses.W, 0f0:0.01f0:1.0f0)
-  fill!(synapses.T, 0f0)
+function reinit!(synapses::GenericSynapses)
+  [reinit!(conn.data) for conn in synapses.conns]
 end
-clear!(frontend::GenericFrontend) = clear!(frontend.D)
-function Base.show(io::IO, synapses::GenericSynapses)
-  print(io, "GenericSynapses ($(synapses.inputSize) => $(synapses.outputSize))")
-end
-Base.size(synapses::GenericSynapses) = (synapses.outputSize, synapses.inputSize)
+reinit!(frontend::GenericFrontend) = clear!(frontend.D)
+#function Base.show(io::IO, synapses::GenericSynapses)
+#  print(io, "GenericSynapses ($(synapses.inputSize) => $(synapses.outputSize))")
+#end
+Base.size(synapses::GenericSynapses) = synapses.outputSize
 function frontend!(gf::GenericFrontend, I)
   rotate!(gf.D)
   gf.D[:] = I
@@ -67,35 +68,54 @@ end
 function _eforward!(scont::CPUContainer{S}, args) where S<:GenericSynapses
   gs = root(scont)
 
-  #O_sum = similar(
-  for conn in filter(conn->conn.op!=:output, gs.conns)
-    tgt_cont = first(filter(arg->arg[2]==conn.uuid, args))[3]
-    tgt_node = root(tgt_cont)
-    @unpack condRate, traceRate = conn.data
-    @unpack frontend, learn = conn.data
-    @unpack C, W, M, T, O = conn.data
+  # Get output connection
+  tgt_conn = first(filter(conn->conn.op==:output, gs.conns))
+  tgt_cont = first(filter(arg->arg[2]==tgt_conn.uuid, args))[3]
+  tgt_node = root(tgt_cont)
+
+  # TODO: Use dispatch to get these values
+  Tout = tgt_node.state.T
+  Fout = tgt_node.state.F
+  Iout = tgt_node.state.I
+
+  # Clear output neuron inputs
+  fill!(Iout, 0.0)
+
+  for src_conn in filter(conn->conn.op!=:output, gs.conns)
+    src_cont = first(filter(arg->arg[2]==src_conn.uuid, args))[3]
+    src_node = root(src_cont)
+
+    @unpack condRate, traceRate = src_conn.data
+    @unpack frontend, learn = src_conn.data
+    @unpack C, W, M, T, O = src_conn.data
 
     # TODO: Use dispatch to get these values
-    I = transient(tgt_node).state.F  #@param input[F]
+    Fin = src_node.state.F
 
     # Shift inputs through frontend
-    I_ = frontend!(frontend, I)
+    I = frontend!(frontend, Fin)
+
+    # Clear connection outputs
+    fill!(O, 0.0)
 
     @inbounds for i = axes(W, 2)
       @inbounds @simd for n = axes(W, 1)
         # Convolve weights with input
-        C[n,i] += M[n,i] * ((W[n,i] * I_[i]) + (condRate * -C[n,i] * !I_[i]))
-        O[n] += W[n,i] * M[n,i] * C[n,i] * I_[i]
+        C[n,i] += M[n,i] * ((W[n,i] * I[i]) + (condRate * -C[n,i] * !I[i]))
+        O[n] += W[n,i] * M[n,i] * C[n,i] * I[i]
 
         # Update traces
-        T[n,i] += I_[i] + (traceRate * -T[n,i] * !I_[i])
+        T[n,i] += I[i] + (traceRate * -T[n,i] * !I[i])
       end
     end
+    Iout .+= O
 
-    # Modify learn rate based on rewards
-    state = (learnRate=1.0,)
-    mod = conn.data.modulator
-    modulate!(state, node, mod)
+    # TODO: Modify learn rate based on rewards
+    # FIXME: Remove me
+    learnRate = 1.0
+    #state = (learnRate=1.0,)
+    #mod = conn.data.modulator
+    #modulate!(state, node, mod)
 
     # Article: Unsupervised learning of digit recognition using spike-timing-dependent plasticity
     # Authors: Peter U. Diehl and Matthew Cook
@@ -103,21 +123,12 @@ function _eforward!(scont::CPUContainer{S}, args) where S<:GenericSynapses
       @inbounds @simd for n = axes(W, 1)
         # Learn weights
         # TODO: Use traces!
-        W[n,i] += learnRate * learn!(gs.learn, I_[i], G[n], F[n], W[n,i])
+        W[n,i] += learnRate * learn!(learn, I[i], Tout[n], Fout[n], W[n,i])
       end
     end
 
     # Clamp weights
     # TODO: Dispatch on type (or just pull into learn!)
-    clamp!.(W, zero(eltype(W)), gs.learn.Wmax)
+    clamp!(W, zero(eltype(W)), learn.Wmax)
   end
-
-  conn = first(filter(conn->conn.op==:output, gs.conns))
-  tgt_cont = first(filter(arg->arg[2]==conn.uuid, args))[3]
-  tgt_node = root(tgt_cont)
-
-  # TODO: Use dispatch to get these values
-  G = transient(tgt_node).state.T #@param output[G]
-  F = transient(tgt_node).state.F #@param output[F]
-  O = transient(tgt_node).state.I #@param output[I]
 end

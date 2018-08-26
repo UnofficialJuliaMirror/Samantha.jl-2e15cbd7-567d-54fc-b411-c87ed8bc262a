@@ -32,13 +32,14 @@ function delnode!(agent::Agent, id::UUID)
 end
 
 # Adds an edge connection from a source node to a target node with a specified operation
-function addedge!(agent::Agent, src::UUID, dst::UUID, op::Symbol)
-  addedge!(agent.nodes[src], agent.nodes[dst], dst, op)
+function addedge!(agent::Agent, src::UUID, dst::UUID, op::Symbol, conf)
+  addedge!(agent.nodes[src], agent.nodes[dst], dst, op, conf)
   push!(agent.edges, (src, dst, op))
 end
 function addedge!(agent::Agent, src::UUID, pairs::Tuple)
   for pair in pairs
-    addedge!(agent, src, pair[1], pair[2])
+    conf = length(pair) == 3 ? pair[3] : nothing
+    addedge!(agent, src, pair[1], pair[2], conf)
   end
 end
 
@@ -74,10 +75,10 @@ function barrier(agent::Agent)
   end
 end
 
-# Clears any transient data in an agent (such as learned weights or temporary values)
-function clear!(agent::Agent)
+# Re-initializes transient data in an agent (such as learned weights or temporary values)
+function reinit!(agent::Agent)
   for node in values(agent.nodes)
-    clear!(root(node))
+    reinit!(root(node))
   end
 end
 

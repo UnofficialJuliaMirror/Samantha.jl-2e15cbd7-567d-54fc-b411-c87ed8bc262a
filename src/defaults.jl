@@ -1,5 +1,5 @@
-addedge!(srccont::C, dstcont, dst, op) where C<:AbstractContainer =
-  addedge!(root(srccont), dstcont, dst, op)
+addedge!(srccont::C, dstcont, dst, op, conf) where C<:AbstractContainer =
+  addedge!(root(srccont), dstcont, dst, op, conf)
 deledge!(srccont::C, dst, op) where C<:AbstractContainer =
   deledge!(root(srccont), dst, op)
 
