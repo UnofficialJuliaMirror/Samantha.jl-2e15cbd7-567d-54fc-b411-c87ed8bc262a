@@ -39,7 +39,7 @@ end
 function addedge!(agent::Agent, src::UUID, pairs::Tuple)
   for pair in pairs
     conf = length(pair) == 3 ? pair[3] : nothing
-    addedge!(agent, src, pair[1], pair[2], conf)
+    addedge!(agent, src, pair[2], pair[1], conf)
   end
 end
 
@@ -82,17 +82,11 @@ function reinit!(agent::Agent)
   end
 end
 
-# Prints a short representation of the agent
-# TODO: Use colors if enabled
-function Base.show(io::IO, agent::Agent)
-  print(io, "Agent($(length(agent.nodes)) nodes, $(length(agent.edges)) edges)")
-end
-
-# Prints a long representation of the agent
+# Prints a text overview of the agent
 # TODO: Use colors if enabled
 # TODO: Optionally elaborate nodes, edges, groups?
-function Base.showall(io::IO, agent::Agent)
-  Base.show(io, agent)
+function Base.show(io::IO, agent::Agent)
+  print(io, "Agent($(length(agent.nodes)) nodes, $(length(agent.edges)) edges)")
 end
 
 # Runs all nodes for one iteration

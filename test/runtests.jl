@@ -8,37 +8,13 @@ for arg in ARGS
   end
 end
 
-using Compat
-using Compat.Test
-import Compat.@info
-import Compat.@warn
-import Compat.axes
+using Samantha
 using Random
+using Test
 
-# Setup global configuration
-const SAMANTHA_TMP_HOME = mktempdir()
-const SAMANTHA_DATA_PATH = joinpath(SAMANTHA_TMP_HOME, "data")
-mkdir(SAMANTHA_DATA_PATH)
-const SAMANTHA_LOG_PATH = joinpath(SAMANTHA_TMP_HOME, "logs")
-mkdir(SAMANTHA_LOG_PATH)
-
-try
-  @info "Loading Samantha"
-  include(joinpath("..", "src", "Samantha.jl")); using .Samantha
-
-  if path == "RUNME.jl"
-    @info "Running All Tests"
-  else
-    @info "Running Test $path"
-  end
-  include(path)
-
-  @info "Tests Finished"
-catch err
-  try
-    rm(SAMANTHA_TMP_HOME, true, true)
-  finally
-  end
-  @warn "Error encountered"
-  rethrow(err)
+if path == "RUNME.jl"
+  @info "Running All Tests"
+else
+  @info "Running Test $path"
 end
+include(path)

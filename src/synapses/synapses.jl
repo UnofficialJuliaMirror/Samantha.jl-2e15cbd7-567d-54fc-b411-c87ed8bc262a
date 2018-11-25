@@ -12,7 +12,7 @@ end
   traceRate::Float32 = 0.5
 
   frontend::Frontend = GenericFrontend(inputSize, 1)
-  learn::LearnAlg = SymmetricRuleLearn()
+  learn::LearnAlg = HebbianDecayLearn()
 
   C::Array{Float32,NDims} = zeros(Float32, outputSize, inputSize)
   W::Array{Float32,NDims} = rand(Float32, outputSize, inputSize)

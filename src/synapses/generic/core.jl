@@ -79,7 +79,7 @@ function _eforward!(scont::CPUContainer{S}, args) where S<:GenericSynapses
   Iout = tgt_node.state.I
 
   # Clear output neuron inputs
-  fill!(Iout, 0.0)
+  #fill!(Iout, 0.0)
 
   for src_conn in filter(conn->conn.op!=:output, gs.conns)
     src_cont = first(filter(arg->arg[2]==src_conn.uuid, args))[3]
@@ -96,7 +96,7 @@ function _eforward!(scont::CPUContainer{S}, args) where S<:GenericSynapses
     I = frontend!(frontend, Fin)
 
     # Clear connection outputs
-    fill!(O, 0.0)
+    #fill!(O, 0.0)
 
     @inbounds for i = axes(W, 2)
       @inbounds @simd for n = axes(W, 1)
@@ -112,7 +112,7 @@ function _eforward!(scont::CPUContainer{S}, args) where S<:GenericSynapses
 
     # TODO: Modify learn rate based on rewards
     # FIXME: Remove me
-    learnRate = 1.0
+    learnRate = 0.1f0
     #state = (learnRate=1.0,)
     #mod = conn.data.modulator
     #modulate!(state, node, mod)

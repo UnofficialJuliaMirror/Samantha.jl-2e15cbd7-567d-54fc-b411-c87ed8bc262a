@@ -1,9 +1,11 @@
-__precompile__(true)
-
 module Samantha
 
+using Parameters
+using OnlineStats
+using Random
+import UUIDs: UUID, uuid4
+
 # Core files
-include("init.jl")
 include("imports-exports.jl")
 include("abstracts.jl")
 include("util.jl")

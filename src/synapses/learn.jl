@@ -1,31 +1,33 @@
 ### Types ###
 
-@nodegen mutable struct SymmetricRuleLearn
-  α_pre::Float32
-  α_post::Float32
-  xtar::Float32 
-  Wmax::Float32 
-  μ::Int
+@with_kw mutable struct HebbianDecayLearn
+  α::Float32 = 0.01f0
+  β::Float32 = 0.9f0
+  Wmax::Float32 = 1.0f0
 end
-SymmetricRuleLearn() = SymmetricRuleLearn(0.1, 0.5, 0.5, 5, 1)
-@nodegen mutable struct PowerLawLearn
-  α::Float32
-  xtar::Float32
-  Wmax::Float32
-  μ::Float32
+@with_kw mutable struct SymmetricRuleLearn
+  α_pre::Float32 = 0.1f0
+  α_post::Float32 = 0.5f0
+  xtar::Float32 = 0.5f0
+  Wmax::Float32 = 5f0
+  μ::Int =1f0
 end
-PowerLawLearn() = PowerLawLearn(0.1, 0.5, 5, 1)
-@nodegen mutable struct ExpWeightDepLearn
-  α::Float32
-  xtar::Float32
-  Wmax::Float32
-  μ::Float32
-  β::Float32
+@with_kw mutable struct PowerLawLearn
+  α::Float32 = 0.1f0
+  xtar::Float32 = 0.5f0
+  Wmax::Float32 = 5f0
+  μ::Float32 = 1f0
 end
-ExpWeightDepLearn() = ExpWeightDepLearn(0.1, 0.5, 5, 1, 1)
-@nodegen mutable struct BCMLearn
-  α::Float32
-  ϵ::Float32
+@with_kw mutable struct ExpWeightDepLearn
+  α::Float32 = 0.1f0
+  xtar::Float32 = 0.5f0
+  Wmax::Float32 = 5f0
+  μ::Float32 = 1f0
+  β::Float32 = 1f0
+end
+@with_kw mutable struct BCMLearn
+  α::Float32 = 0.1f0
+  ϵ::Float32 = 1f0
   θM::Matrix{Float32}
   # FIXME: Histories
 end
@@ -42,6 +44,10 @@ end
 
 ### Methods ###
 
+@inline function learn!(lrn::HebbianDecayLearn, I, G, F, W)
+  α, β, Wmax = lrn.α, lrn.β, lrn.Wmax
+  return α * ((F * G * W) - (β * W))
+end
 @inline function learn!(lrn::SymmetricRuleLearn, I, G, F, W)
   α_pre, α_post, xtar, Wmax, μ = lrn.α_pre, lrn.α_post, lrn.xtar, lrn.Wmax, lrn.μ
   return (α_post * F * (I - xtar) * (Wmax - W^μ)) - (α_pre * I * G * W^μ)
