@@ -5,7 +5,6 @@ import Base: size, show, getindex, setindex!, merge, merge!
 ### Exports ###
 
 export AbstractContainer, AbstractNode
-export @nodegen, isnodegenerated
 export size, show, relocate!, register!, nupdate!, eforward!, reinit!
 export inputs, outputs, getindex, setindex!
 export params

@@ -5,7 +5,7 @@ export show, size, nupdate!
 
 ### Types ###
 
-@nodegen mutable struct NConfig{S}
+mutable struct NConfig{S}
   size::S
   a::Float32
   b::Float32
@@ -16,7 +16,7 @@ export show, size, nupdate!
   traceRate::Float32
   boostRate::Float32
 end
-@nodegen mutable struct NState{RT<:AbstractArray{Float32}, BT<:AbstractArray{Bool}}
+mutable struct NState{RT<:AbstractArray{Float32}, BT<:AbstractArray{Bool}}
   V::RT
   U::RT
   I::RT
@@ -25,7 +25,7 @@ end
   B::RT
   θ::RT
 end
-@nodegen mutable struct Neurons{C<:NConfig, S<:NState} <: AbstractNeurons
+mutable struct Neurons{C<:NConfig, S<:NState} <: AbstractNeurons
   conf::C
   state::S
 end
@@ -83,6 +83,7 @@ function nupdate!(neurons::Neurons)
   end
 end
 nupdate!(ncont::NCPUCont{C,S} where {C,S}) = nupdate!(transient(ncont))
+cycle_neurons!(neurons) = nupdate!(neurons)
 
 ### Includes ###
 

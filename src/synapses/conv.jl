@@ -5,7 +5,7 @@ export SymmetricRuleLearn, PowerLawLearn, ExpWeightDepLearn, ConvSynapses
 ### Types ###
 
 # TODO: Use Value type to select additional modes?
-@nodegen mutable struct ConvSynapses{L} <: AbstractSynapses
+mutable struct ConvSynapses{L} <: AbstractSynapses
   inputSize::Tuple{Int,Int,Int}
   filterSize::Int
   numFilters::Int

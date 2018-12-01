@@ -4,7 +4,7 @@ export activate!, deactivate!
 export relocate!, store!, sync!, addnode!, delnode!, addedge!, deledge!, merge, merge!, barrier
 export run_edges!, run_nodes!, run!
 
-@nodegen mutable struct Agent
+mutable struct Agent
   nodes::Dict{UUID, AbstractContainer}
   edges::Vector{Tuple{UUID, UUID, Symbol}}
 end

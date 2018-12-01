@@ -1,6 +1,6 @@
 ### Exports ###
 
-export GenericConfig, GenericState, GenericSynapses
+export GenericSynapses
 
 ### Types ###
 
@@ -15,25 +15,18 @@ GenericFrontend(inputSize::Int, delayLength::Int, delayIndices=(delayLength-1)*o
 
 @with_kw mutable struct GenericSynapses <: AbstractSynapses
   outputSize::Int
+  outputMask::Float32 = 1.0f0
+  O::Vector{Float32} = zeros(Float32, outputSize)
   conns::Vector{SynapticConnection} = SynapticConnection[]
 end
 GenericSynapses(outputSize) = GenericSynapses(outputSize=outputSize)
 
-### Edge Patterns ###
-
-#@edgepattern GenericSynapses (:input=>GenericNeurons, :output=>GenericNeurons) sizes->(sizes[:input]*sizes[:output])
-@edgepattern GenericSynapses (:input=>ConvNeurons, :reward=>GenericNeurons) sizes->(sizes[:input]*sizes[:reward])
-
 ### Methods ###
 
 function addedge!(synapses::GenericSynapses, dstcont, dst, op, conf)
-  @assert root(dstcont) isa GenericNeurons
   outputSize = synapses.outputSize
   if op == :input
     data = SynapticInput(dstcont, outputSize, conf)
-  elseif op == :output
-    # FIXME: Only allow a single output
-    data = SynapticOutput(dstcont, conf)
   else
     error("GenericSynapses cannot handle op: $op")
   end
@@ -51,20 +44,64 @@ function resize!(synapses::GenericSynapses, new_size)
   synapses.T = resize_arr(synapses.T, new_size)
 end
 function reinit!(synapses::GenericSynapses)
-  [reinit!(conn.data) for conn in synapses.conns]
+  for conn in synapses.conns
+    reinit!(conn.data)
+  end
 end
 reinit!(frontend::GenericFrontend) = clear!(frontend.D)
-#function Base.show(io::IO, synapses::GenericSynapses)
-#  print(io, "GenericSynapses ($(synapses.inputSize) => $(synapses.outputSize))")
-#end
 Base.size(synapses::GenericSynapses) = synapses.outputSize
-function frontend!(gf::GenericFrontend, I)
-  rotate!(gf.D)
-  gf.D[:] = I
-  return gf.D[gf.ID]
+connections(synapses::GenericSynapses) = synapses.conns
+Base.getindex(synapses::GenericSynapses, idx) =
+  getindex(synapses.O, idx)
+
+"Shifts inputs through `frontend`"
+shift_frontend!(syn::SynapticInput, inputs) =
+  shift_frontend!(syn.frontend, inputs)
+function shift_frontend!(frontend::GenericFrontend, inputs)
+  rotate!(frontend.D)
+  frontend.D[:] = inputs
+  return frontend.D[frontend.ID]
 end
 
-#function _eforward!(scont::CPUContainer{S}, input, output, rewards=nothing) where S<:GenericSynapses
+"Calculate and update the output values for a SynapticInput"
+function calculate_outputs!(synapses::GenericSynapses, syni::SynapticInput, inputs)
+  @unpack condRate, traceRate = syni
+  @unpack C, W, M, T = syni
+  O = synapses.O
+  @inbounds for i = axes(W, 2)
+    @inbounds @simd for n = axes(W, 1)
+      # Convolve weights with input
+      C[n,i] += M[n,i] * ((W[n,i] * inputs[i]) + (condRate * -C[n,i] * !inputs[i]))
+      O[n] += W[n,i] * M[n,i] * C[n,i] * inputs[i]
+
+      # Update traces
+      T[n,i] += inputs[i] + (traceRate * -T[n,i] * !inputs[i])
+    end
+  end
+  return O
+end
+
+"Update weights for a SynapticInput"
+function learn_weights!(synapses::GenericSynapses, syni::SynapticInput, n::GenericNeurons, inputs)
+  @unpack W, learn = syni
+  # FIXME: This is bads
+  learnRate = learn.α
+  F, T = n.state.F, n.state.T
+  # Article: Unsupervised learning of digit recognition using spike-timing-dependent plasticity
+  # Authors: Peter U. Diehl and Matthew Cook
+  @inbounds for i = axes(W, 2)
+    @inbounds @simd for n = axes(W, 1)
+      # Learn weights
+      # TODO: Use traces!
+      W[n,i] += learnRate * learn!(learn, inputs[i], T[n], F[n], W[n,i])
+    end
+  end
+
+  # Clamp weights
+  # FIXME: Dispatch on type (or just pull into learn!)
+  clamp!(W, zero(eltype(W)), learn.Wmax)
+end
+
 function _eforward!(scont::CPUContainer{S}, args) where S<:GenericSynapses
   gs = root(scont)
 
@@ -73,7 +110,7 @@ function _eforward!(scont::CPUContainer{S}, args) where S<:GenericSynapses
   tgt_cont = first(filter(arg->arg[2]==tgt_conn.uuid, args))[3]
   tgt_node = root(tgt_cont)
 
-  # TODO: Use dispatch to get these values
+  # FIXME: Use dispatch to get these values
   Tout = tgt_node.state.T
   Fout = tgt_node.state.F
   Iout = tgt_node.state.I
@@ -85,50 +122,17 @@ function _eforward!(scont::CPUContainer{S}, args) where S<:GenericSynapses
     src_cont = first(filter(arg->arg[2]==src_conn.uuid, args))[3]
     src_node = root(src_cont)
 
-    @unpack condRate, traceRate = src_conn.data
-    @unpack frontend, learn = src_conn.data
-    @unpack C, W, M, T, O = src_conn.data
-
     # TODO: Use dispatch to get these values
-    Fin = src_node.state.F
-
-    # Shift inputs through frontend
-    I = frontend!(frontend, Fin)
+    inputs = src_node.state.F
+    shift_frontend!(src_conn.data, inputs)
 
     # Clear connection outputs
     #fill!(O, 0.0)
 
-    @inbounds for i = axes(W, 2)
-      @inbounds @simd for n = axes(W, 1)
-        # Convolve weights with input
-        C[n,i] += M[n,i] * ((W[n,i] * I[i]) + (condRate * -C[n,i] * !I[i]))
-        O[n] += W[n,i] * M[n,i] * C[n,i] * I[i]
-
-        # Update traces
-        T[n,i] += I[i] + (traceRate * -T[n,i] * !I[i])
-      end
-    end
+    O = calculate_outputs!(src_conn.data, inputs)
+    # FIXME: Multiply by tgt_conn.data.outputMask
     Iout .+= O
 
-    # TODO: Modify learn rate based on rewards
-    # FIXME: Remove me
-    learnRate = 0.1f0
-    #state = (learnRate=1.0,)
-    #mod = conn.data.modulator
-    #modulate!(state, node, mod)
-
-    # Article: Unsupervised learning of digit recognition using spike-timing-dependent plasticity
-    # Authors: Peter U. Diehl and Matthew Cook
-    @inbounds for i = axes(W, 2)
-      @inbounds @simd for n = axes(W, 1)
-        # Learn weights
-        # TODO: Use traces!
-        W[n,i] += learnRate * learn!(learn, I[i], Tout[n], Fout[n], W[n,i])
-      end
-    end
-
-    # Clamp weights
-    # TODO: Dispatch on type (or just pull into learn!)
-    clamp!(W, zero(eltype(W)), learn.Wmax)
+    learn_weights!(src_conn.data, tgt_conn.data, tgt_node, inputs)
   end
 end

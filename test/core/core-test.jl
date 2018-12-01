@@ -1,37 +1,45 @@
 @testset "Core Test" begin
   agent = Agent()
-  n1 = addnode!(agent, GenericNeurons(8))
+
+  # Layer
+  l1 = addnode!(agent, GenericLayer(8))
   @test length(agent.nodes) == 1
-  n2 = addnode!(agent, GenericNeurons(8))
-  s1 = addnode!(agent, GenericSynapses(8))
-  addedge!(agent, s1, (
-    (:input, n1),
-    (:output, n2)
+  l2 = addnode!(agent, GenericLayer(8))
+  addedge!(agent, l2, (
+    (:input, l1),
   ))
-  @test length(agent.edges) == 2
+  @test length(agent.edges) == 1
   run!(agent)
 
-  nt = addnode!(agent, GenericNeurons(8))
-  st = addnode!(agent, GenericSynapses(8))
-  addedge!(agent, st, (
-    (:input, n1),
-    (:output, nt)
+  lt = addnode!(agent, GenericLayer(8))
+  addedge!(agent, lt, (
+    (:input, l1),
   ))
-  deledge!(agent, st, n1, :input)
-  @test length(agent.edges) == 3
-  deledge!(agent, st, nt, :output)
-  delnode!(agent, st)
-  @test length(agent.nodes) == 4
-  delnode!(agent, nt)
+  deledge!(agent, lt, l1, :input)
+  @test length(agent.edges) == 1
+  delnode!(agent, lt)
+  @test length(agent.nodes) == 2
+
+  # PatchClamp
+  p1 = addnode!(agent, PatchClamp(8))
+  p2 = addnode!(agent, PatchClamp(8))
+  run!(agent)
+
+  # Layer and PatchClamp edges
+  addedge!(agent, l1, (
+    (:input, p1),
+  ))
+  addedge!(agent, p2, (
+    (:input, l2),
+  ))
+  run!(agent)
 
   # Merge
   agent2 = Agent()
-  n3 = addnode!(agent2, GenericNeurons(16))
+  l3 = addnode!(agent2, GenericLayer(16))
   merge!(agent, agent2)
-  s2 = addnode!(agent, GenericSynapses(16))
-  addedge!(agent, s2, (
-    (:input, n1),
-    (:output, n3)
+  addedge!(agent, s3, (
+    (:input, l2),
   ))
   run!(agent)
 
@@ -39,8 +47,8 @@
   reinit!(agent)
 
   # Deepcopy
-  agent2 = deepcopy(agent)
-  run!(agent2)
+  agent3 = deepcopy(agent)
+  run!(agent3)
 
   # Size
   for (idx, node) in agent.nodes
