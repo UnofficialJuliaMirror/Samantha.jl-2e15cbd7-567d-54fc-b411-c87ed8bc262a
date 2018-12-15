@@ -1,17 +1,27 @@
+### Exports ###
+
+export RewardModulator
+
 ### Types ###
 
-@with_kw mutable struct RewardModulator{Frontend,LearnAlg,NDims}
-  inputSize::Int
-  outputSize::Int
-  inputIndex::Int
-
-  frontend::Frontend = GenericFrontend(inputSize, 1)
-end
+mutable struct RewardModulator end
 
 ### Methods ###
 
-early_modulate!(mod::Nothing, global_state) = ()
-late_modulate!(mod::Nothing, global_state) = ()
+early_modulate!(synapses, mod::Nothing, myconn, conns) = ()
+late_modulate!(synapses, mod::Nothing, myconn, conns) = ()
+
+function early_modulate!(synapses, mod::RewardModulator, myconn, conns)
+  inputs = myconn[2][:]
+  avgInput = mean(inputs)
+  rewardModifier = avgInput
+
+  # Update learnRate for each SynapticInput connection
+  for conn in filter(conn->conn[1] isa SynapticInput, conns)
+    conn[3][:learnRate] *= rewardModifier
+  end
+end
+late_modulate!(synapses, mod::RewardModulator, myconn, conns) = ()
 
 #=
 @with_kw mutable struct FunctionalModulator{OF<:Function,IF}

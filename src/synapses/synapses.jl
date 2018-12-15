@@ -4,7 +4,8 @@ mutable struct SynapticConnection{D}
   data::D
 end
 
-@with_kw mutable struct SynapticInput{Frontend,LearnAlg,NDims}
+# FIXME: Support multiple dimensions
+@with_kw mutable struct SynapticInput{Frontend,LearnAlg,Mod,NDims}
   inputSize::Int
   outputSize::Int
 
@@ -13,6 +14,7 @@ end
 
   frontend::Frontend = GenericFrontend(inputSize, 1)
   learn::LearnAlg = HebbianDecayLearn()
+  modulator::Mod = nothing
 
   C::Array{Float32,NDims} = zeros(Float32, outputSize, inputSize)
   W::Array{Float32,NDims} = rand(Float32, outputSize, inputSize)
@@ -23,7 +25,16 @@ end
 # FIXME: Apply conf
 function SynapticInput(dstcont::CPUContainer, outputSize, conf)
   dstnode = root(dstcont)
-  SynapticInput(;inputSize=size(dstnode), outputSize=outputSize)
+  if haskey(conf, :modulator)
+    modulator = conf[:modulator]
+  else
+    modulator = nothing
+  end
+  SynapticInput(;
+    inputSize=first(size(dstnode)),
+    outputSize=outputSize,
+    modulator=modulator
+  )
 end
 
 ### Methods ###

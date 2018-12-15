@@ -14,14 +14,6 @@ function GenericLayer(sz::Int)
   Layer(GenericSynapses(sz), GenericNeurons(sz))
 end
 
-mutable struct LayerGlobalState
-  # FIXME: Put useful stuff in here
-end
-
-mutable struct LayerLocalState
-  # FIXME: Put useful stuff in here
-end
-
 ### Methods ###
 
 addedge!(layer::Layer, dstcont, dst, op, conf) =
@@ -36,55 +28,76 @@ end
 
 Base.size(layer::Layer) = size(layer.neurons)
 
+Base.getindex(layer::Layer, idx...) =
+  getindex(layer.neurons, idx...)
+
+const ConnWrapper = Tuple{D1, CPUContainer{D2}, Dict{Symbol,Any}} where {D1,D2}
+
 function eforward!(lcont::CPUContainer{Layer{S,N}}, args) where {S,N}
   layer = root(lcont)
+  synapses, neurons = layer.synapses, layer.neurons
 
   # TODO: Sort conns and args by UUID for speed?
-  conns = map(conn->(
-    conn,
-    findfirst(arg->arg[2]==conn.uuid, args),
-    LayerLocalState()
-  ), connections(layer.synapses))
+  conns = ConnWrapper[]
+  for conn in connections(synapses)
+    cont = args[findfirst(arg->arg[2]==conn.uuid, args)][3]
+    inputs = cont[:]
+    state = Dict{Symbol,Any}()
+    state[:inputs] = inputs
+    push!(conns, (conn.data, cont, state))
+  end
 
-  # Initialize global state
-  global_state = LayerGlobalState()
+  # Initialize connection-local states
+  for conn in conns
+    initialize_state!(synapses, conn)
+  end
 
   # Get inputs and shift frontends
   for conn in conns
-    inputs = conn[]
-    shift_frontend!(conn)
+    shift_frontend!(synapses, conn)
   end
 
   # Early modulation
   for conn in conns
-    early_modulate!(conn, global_state)
+    early_modulate!(synapses, conn, conns)
   end
 
   # Calculate outputs
   for conn in conns
-    calculate_outputs!(conn)
+    calculate_outputs!(synapses, conn)
   end
 
   # Late modulation
   for conn in conns
-    late_modulate!(conn, global_state)
+    late_modulate!(synapses, conn, conns)
   end
 
   # Cycle neurons
-  for idx in 1:size(layer.neurons)
-    layer.neurons[idx] = layer.synapses[idx]
+  for idx in 1:size(neurons)
+    # FIXME: Use dispatch properly
+    neurons.state.I[idx] = synapses[idx]
   end
-  cycle_neurons!(layer.neurons)
+  cycle_neurons!(neurons)
 
   # TODO: Learning modulation?
 
   # Learn weights
   for conn in conns
-    learn_weights!(conn, tgt_conns)
+    learn_weights!(synapses, conn, neurons)
   end
 end
 
-const ConnWrapper = Tuple{SynapticConnection{D1}, Container{D2}, LayerLocalState} where {D1,D2}
+initialize_state!(synapses::GenericSynapses, conn::ConnWrapper) =
+  initialize_state!(synapses, conn[1], conn[3])
 
-shift_frontend!(conn::ConnWrapper) =
-  shift_frontend!(conn[1], conn[2])
+shift_frontend!(synapses::GenericSynapses, conn::ConnWrapper) =
+  shift_frontend!(synapses, conn[1], conn[3][:inputs])
+
+early_modulate!(synapses::GenericSynapses, conn::ConnWrapper, conns) =
+  early_modulate!(synapses, conn[1].modulator, conn, conns)
+
+calculate_outputs!(synapses::GenericSynapses, conn::ConnWrapper) =
+  calculate_outputs!(synapses, conn[1], conn[3][:inputs])
+
+late_modulate!(synapses::GenericSynapses, conn::ConnWrapper, conns) =
+  late_modulate!(synapses, conn[1].modulator, conn, conns)

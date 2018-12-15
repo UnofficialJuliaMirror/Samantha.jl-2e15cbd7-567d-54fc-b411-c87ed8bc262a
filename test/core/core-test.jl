@@ -21,7 +21,7 @@
   @test length(agent.nodes) == 2
 
   # PatchClamp
-  p1 = addnode!(agent, PatchClamp(8))
+  p1 = addnode!(agent, PatchClamp(Bool, 8))
   p2 = addnode!(agent, PatchClamp(8))
   run!(agent)
 
@@ -34,11 +34,18 @@
   ))
   run!(agent)
 
+  # RewardModulator
+  p3 = addnode!(agent, PatchClamp(Bool, 8))
+  addedge!(agent, l2, (
+    (:input, p3, (modulator=RewardModulator(),)),
+  ))
+  run!(agent)
+
   # Merge
   agent2 = Agent()
   l3 = addnode!(agent2, GenericLayer(16))
   merge!(agent, agent2)
-  addedge!(agent, s3, (
+  addedge!(agent, l3, (
     (:input, l2),
   ))
   run!(agent)

@@ -33,6 +33,10 @@ GenericNeurons(size::Int; a=0.02, b=0.2, c=-65, d=8, thresh=30, θRate=0.5, trac
 function Base.show(io::IO, neurons::GenericNeurons)
   print(io, "GenericNeurons ($(neurons.conf.size))")
 end
+
+Base.getindex(neurons::GenericNeurons, idx) =
+  neurons.state.F[idx]
+
 # TODO: Make this actually random?
 function randnode(::Type{GenericNeurons}, size::Int=rand(1:20))
   GenericNeurons(size)

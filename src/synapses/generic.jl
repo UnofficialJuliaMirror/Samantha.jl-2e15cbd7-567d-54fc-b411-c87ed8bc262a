@@ -54,9 +54,15 @@ connections(synapses::GenericSynapses) = synapses.conns
 Base.getindex(synapses::GenericSynapses, idx) =
   getindex(synapses.O, idx)
 
+"Initializes the input-local state"
+function initialize_state!(synapses::GenericSynapses, syni::SynapticInput, state)
+  # FIXME
+  state[:learnRate] = 1.0f0 #syni.learnRate
+end
+
 "Shifts inputs through `frontend`"
-shift_frontend!(syn::SynapticInput, inputs) =
-  shift_frontend!(syn.frontend, inputs)
+shift_frontend!(synapses::GenericSynapses, syni::SynapticInput, inputs) =
+  shift_frontend!(syni.frontend, inputs)
 function shift_frontend!(frontend::GenericFrontend, inputs)
   rotate!(frontend.D)
   frontend.D[:] = inputs
@@ -82,11 +88,13 @@ function calculate_outputs!(synapses::GenericSynapses, syni::SynapticInput, inpu
 end
 
 "Update weights for a SynapticInput"
-function learn_weights!(synapses::GenericSynapses, syni::SynapticInput, n::GenericNeurons, inputs)
+function learn_weights!(synapses::GenericSynapses, conn, neurons::GenericNeurons)
+  syni = conn[1]
+  inputs = conn[3][:inputs]
+  learnRate = conn[3][:learnRate]
   @unpack W, learn = syni
-  # FIXME: This is bads
-  learnRate = learn.α
-  F, T = n.state.F, n.state.T
+  F, T = neurons.state.F, neurons.state.T
+
   # Article: Unsupervised learning of digit recognition using spike-timing-dependent plasticity
   # Authors: Peter U. Diehl and Matthew Cook
   @inbounds for i = axes(W, 2)

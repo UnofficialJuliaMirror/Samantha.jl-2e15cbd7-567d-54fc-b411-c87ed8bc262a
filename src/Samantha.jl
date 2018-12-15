@@ -14,6 +14,7 @@ include("defaults.jl")
 include("neurons/neurons.jl")
 include("synapses/synapses.jl")
 include("layer.jl")
+include("patchclamp.jl")
 include("agent.jl")
 include("interface.jl")
 

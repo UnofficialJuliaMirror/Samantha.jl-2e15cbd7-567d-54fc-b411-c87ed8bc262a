@@ -19,3 +19,9 @@ defaultvalue(x::T) where T<:Number = zero(T)
 bounds(obj, param1, params...) = bounds(obj[param1], params...)
 bounds(obj, param::T) where T<:Val = bounds(obj[param])
 bounds(x::T) where T<:Number = (zero(T), one(T))
+
+Base.size(cont::CPUContainer{C}) where C<:AbstractNode =
+  size(root(cont))
+
+Base.getindex(cont::CPUContainer{C}, idx...) where C<:AbstractNode =
+  getindex(root(cont), idx...)

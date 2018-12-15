@@ -38,7 +38,7 @@ function addedge!(agent::Agent, src::UUID, dst::UUID, op::Symbol, conf)
 end
 function addedge!(agent::Agent, src::UUID, pairs::Tuple)
   for pair in pairs
-    conf = length(pair) == 3 ? pair[3] : nothing
+    conf = length(pair) == 3 ? pair[3] : NamedTuple()
     addedge!(agent, src, pair[2], pair[1], conf)
   end
 end
