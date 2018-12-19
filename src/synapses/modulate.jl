@@ -4,7 +4,10 @@ export RewardModulator
 
 ### Types ###
 
-mutable struct RewardModulator end
+mutable struct RewardModulator
+  avgInput::Mean
+end
+RewardModulator() = RewardModulator(Mean(weight=ExponentialWeight()))
 
 ### Methods ###
 
@@ -14,7 +17,8 @@ late_modulate!(synapses, mod::Nothing, myconn, conns) = ()
 function early_modulate!(synapses, mod::RewardModulator, myconn, conns)
   inputs = myconn[2][:]
   avgInput = mean(inputs)
-  rewardModifier = avgInput
+  rewardModifier = avgInput - value(mod.avgInput)
+  fit!(mod.avgInput, avgInput)
 
   # Update learnRate for each SynapticInput connection
   for conn in filter(conn->conn[1] isa SynapticInput, conns)

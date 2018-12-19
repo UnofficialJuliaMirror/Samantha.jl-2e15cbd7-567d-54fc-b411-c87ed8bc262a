@@ -32,7 +32,7 @@ function delnode!(agent::Agent, id::UUID)
 end
 
 # Adds an edge connection from a source node to a target node with a specified operation
-function addedge!(agent::Agent, src::UUID, dst::UUID, op::Symbol, conf)
+function addedge!(agent::Agent, src::UUID, dst::UUID, op::Symbol, conf=NamedTuple())
   addedge!(agent.nodes[src], agent.nodes[dst], dst, op, conf)
   push!(agent.edges, (src, dst, op))
 end

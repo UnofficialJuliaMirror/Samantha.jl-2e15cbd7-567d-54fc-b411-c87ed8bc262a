@@ -6,7 +6,6 @@
 * MPI Integration  
 
 ## Nodes
-* Character IO  
 * Synaptic Hysteresis  
 
 ## Utilities

@@ -1,6 +1,6 @@
 ### Exports ###
 
-export GenericSynapses
+export GenericSynapses, GenericFrontend
 
 ### Types ###
 
