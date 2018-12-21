@@ -20,6 +20,8 @@ addedge!(layer::Layer, dstcont, dst, op, conf) =
   addedge!(layer.synapses, dstcont, dst, op, conf)
 deledge!(layer::Layer, dst, op) =
   deledge!(layer.synapses, dst, op)
+deledges!(layer::Layer) =
+  deledges!(layer.synapses)
 
 function reinit!(layer::Layer)
   reinit!(layer.synapses)
@@ -40,7 +42,9 @@ function eforward!(lcont::CPUContainer{Layer{S,N}}, args) where {S,N}
   # TODO: Sort conns and args by UUID for speed?
   conns = ConnWrapper[]
   for conn in connections(synapses)
-    cont = args[findfirst(arg->arg[2]==conn.uuid, args)][3]
+    idx = findfirst(arg->arg[2]==conn.uuid, args)
+    @assert idx !== nothing
+    cont = args[idx][3]
     inputs = cont[:]
     state = Dict{Symbol,Any}()
     state[:inputs] = inputs

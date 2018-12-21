@@ -1,5 +1,5 @@
 export Agent
-export sync!, addnode!, delnode!, addedge!, deledge!, merge, merge!, barrier
+export sync!, addnode!, delnode!, addedge!, deledge!, deledges!, merge, merge!, barrier
 export activate!, deactivate!
 export relocate!, store!, sync!, addnode!, delnode!, addedge!, deledge!, merge, merge!, barrier
 export run_edges!, run_nodes!, run!
@@ -48,10 +48,19 @@ function deledge!(agent::Agent, src::UUID, dst::UUID, op::Symbol)
   edges = findall(edge->(edge[1]==src&&edge[2]==dst&&edge[3]==op), agent.edges)
   @assert length(edges) != 0 "No such edge found with src: $src, dst: $dst, op: $op"
   @assert length(edges) < 2 "Multiple matching edges returned"
-  deleteat!(agent.edges, edges[1])
   deledge!(agent.nodes[src], dst, op)
+  deleteat!(agent.edges, edges[1])
 end
-deledge!(agent::Agent, edge::Tuple{UUID,UUID,Symbol}) = delete!(agent.edges, edge)
+deledge!(agent::Agent, edge::Tuple{UUID,UUID,Symbol}) =
+  deledge!(agent, edge...)
+
+# Deletes all edges originating from a node
+function deledges!(agent::Agent, src::UUID)
+  edges = findall(edge->(edge[1]==src), agent.edges)
+  deledges!(agent.nodes[src])
+  # TODO: Add assertion that this works as intended
+  deleteat!.(Ref(agent.edges), reverse(edges))
+end
 
 # Returns the union of two agents
 function merge(agent1::Agent, agent2::Agent)

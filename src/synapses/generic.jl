@@ -10,8 +10,15 @@ mutable struct GenericFrontend
   D::RingBuffer{Bool}
   ID::Vector{Int}
 end
-GenericFrontend(inputSize::Int, delayLength::Int, delayIndices=(delayLength-1)*ones(inputSize)) =
-  GenericFrontend(delayLength, RingBuffer(Bool, inputSize, delayLength), delayIndices)
+GenericFrontend(
+  inputSize::Int,
+  delayLength::Int,
+  delayIndices=(delayLength-1)*ones(inputSize)) =
+  GenericFrontend(
+    delayLength,
+    RingBuffer(Bool, inputSize, delayLength),
+    delayIndices
+  )
 
 @with_kw mutable struct GenericSynapses <: AbstractSynapses
   outputSize::Int
@@ -33,7 +40,8 @@ function addedge!(synapses::GenericSynapses, dstcont, dst, op, conf)
   push!(synapses.conns, SynapticConnection(dst, op, data))
 end
 deledge!(synapses::GenericSynapses, dst, op) =
-  filter!(conn->conn.uuid==dst, synapses.conns)
+  filter!(conn->conn.uuid!==dst, synapses.conns)
+deledges!(synapses::GenericSynapses) = empty!(synapses.conns)
 function resize!(synapses::GenericSynapses, new_size)
   old_size = size(synapses)
   synapses.inputSize = new_size[1]

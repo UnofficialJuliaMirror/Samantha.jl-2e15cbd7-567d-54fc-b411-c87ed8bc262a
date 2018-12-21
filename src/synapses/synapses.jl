@@ -1,3 +1,9 @@
+### Exports ###
+
+export SynapticInput
+
+### Types ###
+
 mutable struct SynapticConnection{D}
   uuid::UUID
   op::Symbol

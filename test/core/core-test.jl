@@ -19,6 +19,14 @@
   @test length(agent.edges) == 1
   delnode!(agent, lt)
   @test length(agent.nodes) == 2
+  
+  # Deledges!
+  lt = addnode!(agent, GenericLayer(8))
+  addedge!(agent, lt, (
+    (:input, l1),
+  ))
+  deledges!(agent, lt)
+  @test length(root(agent.nodes[lt]).synapses.conns) == 0
 
   # PatchClamp
   p1 = addnode!(agent, PatchClamp(Bool, 8))

@@ -10,7 +10,7 @@ end
   α_post::Float32 = 0.5f0
   xtar::Float32 = 0.5f0
   Wmax::Float32 = 5f0
-  μ::Int =1f0
+  μ::Int = 1f0
 end
 @with_kw mutable struct PowerLawLearn
   α::Float32 = 0.1f0

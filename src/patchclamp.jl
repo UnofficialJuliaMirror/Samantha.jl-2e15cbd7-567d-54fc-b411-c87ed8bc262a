@@ -31,7 +31,8 @@ function addedge!(pc::PatchClamp, dstcont, dst, op, conf)
   end
 end
 deledge!(pc::PatchClamp, dst, op) =
-  filter!(conn->conn.uuid==dst, pc.conns)
+  filter!(conn->conn.uuid!==dst, pc.conns)
+deledges!(pc::PatchClamp) = empty!(pc.conns)
 connections(pc::PatchClamp) = pc.conns
 
 function eforward!(cont::CPUContainer{PC}, args) where PC<:PatchClamp
