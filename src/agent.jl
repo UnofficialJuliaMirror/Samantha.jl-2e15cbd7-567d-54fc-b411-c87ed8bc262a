@@ -4,6 +4,7 @@ export activate!, deactivate!
 export relocate!, store!, sync!, addnode!, delnode!, addedge!, deledge!, merge, merge!, barrier
 export run_edges!, run_nodes!, run!
 
+# FIXME: Make immutable if possible
 mutable struct Agent
   nodes::Dict{UUID, AbstractContainer}
   edges::Vector{Tuple{UUID, UUID, Symbol}}
@@ -135,3 +136,6 @@ function run!(agent::Agent)
   # Forward pass on edge-connected nodes
   run_edges!(agent)
 end
+
+==(agent1::Agent, agent2::Agent) =
+  (agent1.nodes == agent2.nodes) && (agent1.edges == agent2.edges)

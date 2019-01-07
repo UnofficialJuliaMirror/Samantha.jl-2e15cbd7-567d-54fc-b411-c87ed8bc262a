@@ -1,3 +1,8 @@
+### Exports ###
+
+export HebbianDecayLearn, SymmetricRuleLearn, PowerLawLearn, ExpWeightDepLearn
+export BCMLearn
+
 ### Types ###
 
 @with_kw mutable struct HebbianDecayLearn
@@ -44,24 +49,54 @@ end
 
 ### Methods ###
 
-@inline function learn!(lrn::HebbianDecayLearn, I, G, F, W)
+function learn!(lrn::HebbianDecayLearn, learnRate, I, G, F, W)
   α, β, Wmax = lrn.α, lrn.β, lrn.Wmax
-  return α * ((F * G * W) - (β * W))
+  @inbounds for i = axes(W, 2)
+    @inbounds @simd for n = axes(W, 1)
+      W[n,i] += learnRate * α * ((F[n] * G[n] * W[n,i]) - (β * W[n,i]))
+    end
+  end
+  clamp!(W, zero(eltype(W)), Wmax)
 end
-@inline function learn!(lrn::SymmetricRuleLearn, I, G, F, W)
+
+# Article: Unsupervised learning of digit recognition using spike-timing-dependent plasticity
+# Authors: Peter U. Diehl and Matthew Cook
+function learn!(lrn::SymmetricRuleLearn, learnRate, I, G, F, W)
   α_pre, α_post, xtar, Wmax, μ = lrn.α_pre, lrn.α_post, lrn.xtar, lrn.Wmax, lrn.μ
-  return (α_post * F * (I - xtar) * (Wmax - W^μ)) - (α_pre * I * G * W^μ)
+  @inbounds for i = axes(W, 2)
+    @inbounds @simd for n = axes(W, 1)
+      W[n,i] += (α_post * F[n] * (I[i] - xtar) * (Wmax - W[n,i]^μ)) - (α_pre * I[i] * G[n] * W[n,i]^μ)
+    end
+  end
+  clamp!(W, zero(eltype(W)), Wmax)
 end
+
 # TODO: Inspect both of these:
-@inline function learn!(lrn::PowerLawLearn, I, G, F, W)
+function learn!(lrn::PowerLawLearn, learnRate, I, G, F, W)
   α, xtar, Wmax, μ = lrn.α, lrn.xtar, lrn.Wmax, lrn.μ
-  return α * F * (G - xtar) * (Wmax - W)^μ
+  @inbounds for i = axes(W, 2)
+    @inbounds @simd for n = axes(W, 1)
+      W[n,i] += learnRate * α * F[n] * (G[n] - xtar) * (Wmax - W[n,i])^μ
+    end
+  end
+  clamp!(W, zero(eltype(W)), Wmax)
 end
-@inline function learn!(lrn::ExpWeightDepLearn, I, G, F, W)
+function learn!(lrn::ExpWeightDepLearn, learnRate, I, G, F, W)
   α, xtar, Wmax, μ, β = lrn.α, lrn.xtar, lrn.Wmax, lrn.μ, lrn.β
-  return α * F * ((G * exp(-β * W)) - (xtar * exp(-β * (Wmax - W))))
+  @inbounds for i = axes(W, 2)
+    @inbounds @simd for n = axes(W, 1)
+      W[n,i] += learnRate * α * F[n] * ((G[n] * exp(-β * W[n,i])) - (xtar * exp(-β * (Wmax - W[n,i]))))
+    end
+  end
+  clamp!(W, zero(eltype(W)), Wmax)
 end
-@inline function learn!(lrn::BCMLearn, I, G, F, W)
+
+function learn!(lrn::BCMLearn, learnRate, I, G, F, W)
   α, ϵ, θM = lrn.α, lrn.ϵ, lrn.θM
-  # FIXME
+  @inbounds for i = axes(W, 2)
+    @inbounds @simd for n = axes(W, 1)
+      # FIXME
+    end
+  end
+  clamp!(W, zero(eltype(W)), Wmax)
 end

@@ -62,6 +62,11 @@ connections(synapses::GenericSynapses) = synapses.conns
 Base.getindex(synapses::GenericSynapses, idx) =
   getindex(synapses.O, idx)
 
+"Resets run-local variables"
+function reset_run!(synapses::GenericSynapses)
+  synapses.O .= 0.0
+end
+
 "Initializes the input-local state"
 function initialize_state!(synapses::GenericSynapses, syni::SynapticInput, state)
   # FIXME
@@ -103,19 +108,7 @@ function learn_weights!(synapses::GenericSynapses, conn, neurons::GenericNeurons
   @unpack W, learn = syni
   F, T = neurons.state.F, neurons.state.T
 
-  # Article: Unsupervised learning of digit recognition using spike-timing-dependent plasticity
-  # Authors: Peter U. Diehl and Matthew Cook
-  @inbounds for i = axes(W, 2)
-    @inbounds @simd for n = axes(W, 1)
-      # Learn weights
-      # TODO: Use traces!
-      W[n,i] += learnRate * learn!(learn, inputs[i], T[n], F[n], W[n,i])
-    end
-  end
-
-  # Clamp weights
-  # FIXME: Dispatch on type (or just pull into learn!)
-  clamp!(W, zero(eltype(W)), learn.Wmax)
+  learn!(learn, learnRate, inputs, T, F, W)
 end
 
 function _eforward!(scont::CPUContainer{S}, args) where S<:GenericSynapses

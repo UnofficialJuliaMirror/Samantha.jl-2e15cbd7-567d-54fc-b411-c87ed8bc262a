@@ -3,6 +3,7 @@ module Samantha
 using Parameters
 using OnlineStats
 using Random
+import Base: ==, hash
 import UUIDs: UUID, uuid4
 
 # Core files

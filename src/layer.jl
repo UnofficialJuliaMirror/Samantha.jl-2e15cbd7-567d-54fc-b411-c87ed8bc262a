@@ -33,6 +33,9 @@ Base.size(layer::Layer) = size(layer.neurons)
 Base.getindex(layer::Layer, idx...) =
   getindex(layer.neurons, idx...)
 
+# ==(layer1::Layer, layer2::Layer) =
+#   (layer1.synapses == layer2.synapses) && (layer1.neurons == layer2.neurons)
+
 const ConnWrapper = Tuple{D1, CPUContainer{D2}, Dict{Symbol,Any}} where {D1,D2}
 
 function eforward!(lcont::CPUContainer{Layer{S,N}}, args) where {S,N}
@@ -50,6 +53,9 @@ function eforward!(lcont::CPUContainer{Layer{S,N}}, args) where {S,N}
     state[:inputs] = inputs
     push!(conns, (conn.data, cont, state))
   end
+
+  # Reset run-local variables
+  reset_run!(synapses)
 
   # Initialize connection-local states
   for conn in conns

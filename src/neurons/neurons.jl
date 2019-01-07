@@ -40,6 +40,7 @@ function reinit!(neurons::Neurons)
   fill!(neurons.state.I, 0f0)
   fill!(neurons.state.F, false)
   fill!(neurons.state.T, 0f0)
+  fill!(neurons.state.B, 0f0)
   fill!(neurons.state.θ, 0f0)
 end
 function Base.show(io::IO, neurons::Neurons)

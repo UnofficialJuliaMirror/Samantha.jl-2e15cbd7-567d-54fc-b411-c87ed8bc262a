@@ -1,6 +1,6 @@
 ### Exports ###
 
-export SynapticInput
+export SynapticConnection, SynapticInput
 
 ### Types ###
 
@@ -18,7 +18,8 @@ end
   condRate::Float32 = 0.1
   traceRate::Float32 = 0.5
 
-  frontend::Frontend = GenericFrontend(inputSize, 1)
+  # FIXME: Don't hard-code 16
+  frontend::Frontend = GenericFrontend(inputSize, 16)
   learn::LearnAlg = HebbianDecayLearn()
   modulator::Mod = nothing
 

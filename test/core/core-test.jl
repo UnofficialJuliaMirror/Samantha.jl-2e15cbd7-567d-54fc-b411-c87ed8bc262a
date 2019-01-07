@@ -19,7 +19,7 @@
   @test length(agent.edges) == 1
   delnode!(agent, lt)
   @test length(agent.nodes) == 2
-  
+
   # Deledges!
   lt = addnode!(agent, GenericLayer(8))
   addedge!(agent, lt, (

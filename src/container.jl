@@ -24,3 +24,6 @@ root(cont::AbstractContainer) = cont.root
 transient(cont::AbstractContainer) = cont.transient
 transient(cont::InactiveContainer) = root(cont)
 transient(cont::CPUContainer) = root(cont)
+
+==(cont1::CPUContainer, cont2::CPUContainer) =
+  root(cont1) == root(cont2)
